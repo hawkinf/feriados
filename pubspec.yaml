@@ -1,0 +1,34 @@
+name: feriados_app
+description: Aplicativo de feriados Vale do Paraíba/Sul de Minas - Premium Executivo.
+publish_to: 'none'
+
+version: 2.4.0+6
+
+environment:
+  sdk: '>=3.10.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  http: ^1.1.0
+  intl: ^0.20.2
+  shared_preferences: ^2.2.2
+
+  # EXPORTAÇÃO PDF  
+  pdf: ^3.11.0
+  printing: ^5.12.0
+  
+  # GRÁFICOS
+  fl_chart: ^0.66.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/logo.png

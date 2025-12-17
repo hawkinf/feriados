@@ -1,0 +1,38 @@
+PASSOS FINAIS - Adicionar métodos
+===================================
+
+PASSO 1: Baixe o arquivo METODOS_COMPLETOS_COPIAR.md do chat
+
+PASSO 2: Abra lib\main.dart no VS Code
+
+PASSO 3: Vá até o final da classe _HolidayScreenState
+         (procure pelo penúltimo } antes do final do arquivo)
+
+PASSO 4: Cole os 6 métodos do arquivo METODOS_COMPLETOS_COPIAR.md:
+         - _fetchYearlyData
+         - _buildYearlyChart
+         - _exportToPdf
+         - _generateHolidaysPdf
+         - _buildPdfStatRow
+         - _buildPdfTableCell
+
+PASSO 5: Procure pelo método _calculateStats
+         Após a linha: final date = DateFormat('yyyy-MM-dd').parse(holiday.date);
+         Adicione estas linhas:
+         
+final month = date.month;
+final monthNames = {
+  1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril',
+  5: 'Maio', 6: 'Junho', 7: 'Julho', 8: 'Agosto',
+  9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro',
+};
+final monthName = monthNames[month] ?? 'Mês $month';
+final isWeekend = (date.weekday == DateTime.saturday || date.weekday == DateTime.sunday);
+stats.addMonthStat(month, monthName, isWeekend);
+
+PASSO 6: Salve (Ctrl+S)
+
+PASSO 7: No CMD, execute:
+         flutter run -d windows
+
+PRONTO! App funcionando com todas as funcionalidades!
