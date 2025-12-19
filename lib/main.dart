@@ -1028,8 +1028,10 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                           final month = dayData.month;
                           final year = dayData.year;
                           final isCurrentMonth = dayData.isCurrentMonth;
-                          final weekday = (index % 7) + 1;
-                          final isWeekend = weekday == 1 || weekday == 7;
+                          final dateObj = DateTime(year, month, day);
+                          final weekday = dateObj.weekday; // 1=segunda, 7=domingo
+                          final dayOfWeek = weekday % 7; // 0=domingo, 1=segunda, ..., 6=sábado
+                          final isWeekend = dayOfWeek == 0 || dayOfWeek == 6; // domingo ou sábado
                           final isToday = isCurrentMonth && day == todayDay;
                           final holidayKey = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
                           final isHoliday = holidayDays.contains(holidayKey);
