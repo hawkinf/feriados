@@ -1055,7 +1055,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                 fontSize: headerFontSize * 0.8,
                                 fontWeight: FontWeight.bold,
                                 color: day == 'DOM' || day == 'SAB' ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                                backgroundColor: day == 'DOM' || day == 'SAB' ? Colors.red : Colors.transparent,
+                                backgroundColor: day == 'DOM' || day == 'SAB' ? Color(0xFFEF9A9A) : Colors.transparent, // Vermelho mais claro
                               ),
                             ),
                           ),
@@ -1104,7 +1104,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                             textColor = Colors.grey[700] ?? Colors.grey;
                             opacity = 1.0;
                           } else if (isWeekend) {
-                            bgColor = Colors.red;
+                            bgColor = Color(0xFFEF9A9A); // Vermelho mais claro
                             textColor = Colors.white;
                           } else if (!isCurrentMonth) {
                             bgColor = Colors.grey[600] ?? Colors.grey;
@@ -1308,7 +1308,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                               bgColor = Colors.green;
                               textColor = Colors.white;
                             } else if (isWeekend) {
-                              bgColor = Colors.red;
+                              bgColor = Color(0xFFEF9A9A); // Vermelho mais claro
                               textColor = Colors.white;
                             }
                             
@@ -1499,7 +1499,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                         bgColor = Colors.green;
                                         textColor = Colors.white;
                                       } else if (isWeekend) {
-                                        bgColor = Colors.red;
+                                        bgColor = Color(0xFFEF9A9A); // Vermelho mais claro
                                         textColor = Colors.white;
                                       }
                                       
