@@ -1462,101 +1462,102 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                         final firstDayOfWeek = firstDayOfMonth.weekday == 7 ? 1 : firstDayOfMonth.weekday + 1;
                         final daysInMonth = DateTime(_selectedYear, month + 1, 0).day;
                         
-                        return Column(
-                          children: [
-                            Card(
-                              elevation: 1,
-                              child: Padding(
-                                padding: EdgeInsets.all(4),
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      '${monthNames[monthIndex]} $_selectedYear',
-                                      style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
-                                    ),
-                                    Expanded(
-                                      child: GridView.builder(
-                                        shrinkWrap: true,
-                                        physics: const NeverScrollableScrollPhysics(),
-                                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 7,
-                                          childAspectRatio: 1.0,
-                                          mainAxisSpacing: 0.3,
-                                          crossAxisSpacing: 0.3,
-                                        ),
-                                        itemCount: firstDayOfWeek - 1 + daysInMonth,
-                                        itemBuilder: (context, index) {
-                                          if (index < firstDayOfWeek - 1) {
-                                            return SizedBox.shrink();
-                                          }
-                                          
-                                          final day = index - (firstDayOfWeek - 1) + 1;
-                                          final weekday = (index % 7) + 1;
-                                          final isToday = now.year == _selectedYear && now.month == month && now.day == day;
-                                          final holidayKey = '$_selectedYear-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
-                                          final isHoliday = holidayDays.contains(holidayKey);
-                                          
-                                          Color bgColor = Colors.white;
-                                          Color textColor = Colors.black;
-                                          
-                                          if (isToday) {
-                                            bgColor = Colors.blue;
-                                            textColor = Colors.white;
-                                          } else if (isHoliday) {
-                                            bgColor = Colors.green;
-                                            textColor = Colors.white;
-                                          } else if (weekday == 7) { // Domingo
-                                            bgColor = Colors.red;
-                                            textColor = Colors.white;
-                                          } else if (weekday == 6) { // Sábado
-                                            bgColor = Color(0xFFEF9A9A); // Vermelho mais claro
-                                            textColor = Colors.white;
-                                          }
-                                          
-                                          return Container(
-                                            decoration: BoxDecoration(
-                                              color: bgColor,
-                                              border: Border.all(color: Colors.black, width: 0.3),
-                                              borderRadius: BorderRadius.circular(2),
-                                            ),
-                                            child: Center(
-                                              child: Text(
-                                                day.toString(),
-                                                style: TextStyle(fontSize: 7, fontWeight: FontWeight.bold, color: textColor),
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ],
+                        // Calcular feriados do mês
+                        final monthHolidays = holidayDays
+                            .where((k) => k.startsWith('$_selectedYear-${month.toString().padLeft(2, '0')}-'))
+                            .toList();
+                        
+                        return Card(
+                          elevation: 1,
+                          child: Padding(
+                            padding: EdgeInsets.all(4),
+                            child: Column(
+                              children: [
+                                Text(
+                                  '${monthNames[monthIndex]} $_selectedYear',
+                                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
                                 ),
-                              ),
-                            ),
-                            // Descrição de feriado embaixo do mês
-                            if (holidayDays.any((key) => key.startsWith('$_selectedYear-${month.toString().padLeft(2, '0')}-')))
-                              Padding(
-                                padding: EdgeInsets.only(top: 4),
-                                child: Container(
-                                  constraints: BoxConstraints(maxWidth: 200),
-                                  child: Column(
-                                    children: [
-                                      for (final key in holidayDays.where((k) => k.startsWith('$_selectedYear-${month.toString().padLeft(2, '0')}-')).toList())
-                                        Padding(
-                                          padding: EdgeInsets.only(bottom: 2),
+                                Expanded(
+                                  child: GridView.builder(
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 7,
+                                      childAspectRatio: 1.0,
+                                      mainAxisSpacing: 0.3,
+                                      crossAxisSpacing: 0.3,
+                                    ),
+                                    itemCount: firstDayOfWeek - 1 + daysInMonth,
+                                    itemBuilder: (context, index) {
+                                      if (index < firstDayOfWeek - 1) {
+                                        return SizedBox.shrink();
+                                      }
+                                      
+                                      final day = index - (firstDayOfWeek - 1) + 1;
+                                      final weekday = (index % 7) + 1;
+                                      final isToday = now.year == _selectedYear && now.month == month && now.day == day;
+                                      final holidayKey = '$_selectedYear-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+                                      final isHoliday = holidayDays.contains(holidayKey);
+                                      
+                                      Color bgColor = Colors.white;
+                                      Color textColor = Colors.black;
+                                      
+                                      if (isToday) {
+                                        bgColor = Colors.blue;
+                                        textColor = Colors.white;
+                                      } else if (isHoliday) {
+                                        bgColor = Colors.green;
+                                        textColor = Colors.white;
+                                      } else if (weekday == 7) { // Domingo
+                                        bgColor = Colors.red;
+                                        textColor = Colors.white;
+                                      } else if (weekday == 6) { // Sábado
+                                        bgColor = Color(0xFFEF9A9A); // Vermelho mais claro
+                                        textColor = Colors.white;
+                                      }
+                                      
+                                      return Container(
+                                        decoration: BoxDecoration(
+                                          color: bgColor,
+                                          border: Border.all(color: Colors.black, width: 0.3),
+                                          borderRadius: BorderRadius.circular(2),
+                                        ),
+                                        child: Center(
                                           child: Text(
-                                            holidayNames[key] ?? '',
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(fontSize: 6, height: 1.0),
+                                            day.toString(),
+                                            style: TextStyle(fontSize: 7, fontWeight: FontWeight.bold, color: textColor),
                                           ),
                                         ),
-                                    ],
+                                      );
+                                    },
                                   ),
                                 ),
-                              ),
-                          ],
+                                // Descrição de feriado embaixo do mês
+                                if (monthHolidays.isNotEmpty)
+                                  Padding(
+                                    padding: EdgeInsets.only(top: 2),
+                                    child: SizedBox(
+                                      height: 16,
+                                      child: SingleChildScrollView(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            for (final key in monthHolidays)
+                                              Text(
+                                                holidayNames[key] ?? '',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(fontSize: 5, height: 1.0),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
                         );
                       },
                     ),
