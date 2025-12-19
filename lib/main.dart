@@ -1756,33 +1756,43 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                         flex: 1,
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Theme.of(context).colorScheme.outline,
-                                width: 2,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                'Tipo de Calendário',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.grey[600]),
                               ),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: DropdownButton<String>(
-                              value: _calendarType,
-                              isExpanded: true,
-                              underline: const SizedBox(),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
-                              items: const [
-                                DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
-                                DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
-                                DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
-                              ],
-                              onChanged: (type) {
-                                if (type != null) {
-                                  setState(() {
-                                    _calendarType = type;
-                                  });
-                                }
-                              },
-                            ),
+                              SizedBox(height: 8),
+                              Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Theme.of(context).colorScheme.outline,
+                                    width: 2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: DropdownButton<String>(
+                                  value: _calendarType,
+                                  isExpanded: true,
+                                  underline: const SizedBox(),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+                                  items: const [
+                                    DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
+                                    DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
+                                    DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
+                                  ],
+                                  onChanged: (type) {
+                                    if (type != null) {
+                                      setState(() {
+                                        _calendarType = type;
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
