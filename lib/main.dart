@@ -1522,14 +1522,14 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                         if (isToday) {
                                           bgColor = Colors.blue;
                                           textColor = Colors.white;
-                                        } else if (isHoliday) {
-                                          bgColor = Colors.green;
-                                          textColor = Colors.white;
-                                        } else if (dayOfWeek == 0) { // Domingo
+                                        } else if (dayOfWeek == 0) { // Domingo (verifica antes de feriado)
                                           bgColor = Colors.red;
                                           textColor = Colors.white;
                                         } else if (dayOfWeek == 6) { // Sábado
                                           bgColor = Color(0xFFEF9A9A); // Vermelho mais claro
+                                          textColor = Colors.white;
+                                        } else if (isHoliday) {
+                                          bgColor = Colors.green;
                                           textColor = Colors.white;
                                         }
 
