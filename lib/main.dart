@@ -1415,7 +1415,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
         }
         
         return Transform.scale(
-          scale: 1.2,
+          scale: 0.95,
           alignment: Alignment.topCenter,
           child: Card(
             elevation: 1,
@@ -1444,7 +1444,15 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                   ),
                   // GRID ANUAL
                   Expanded(
-                    child: GridView.builder(
+                    child: Column(
+                      children: [
+                        Text(
+                          _selectedYear.toString(),
+                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                        ),
+                        SizedBox(height: 8),
+                        Expanded(
+                          child: GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -1574,6 +1582,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                           ),
                         );
                       },
+                    ),
+                        ),
+                      ],
                     ),
                   ),
                   // SETA DIREITA
