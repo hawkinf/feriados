@@ -1515,7 +1515,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                               side: const BorderSide(color: Colors.black, width: 1.5),
                             ),
                             child: Padding(
-                              padding: EdgeInsets.all(2),
+                              padding: EdgeInsets.all(0.5),
                               child: Column(
                                 children: [
                                   Text(
@@ -1542,7 +1542,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                         crossAxisCount: 7,
                                         childAspectRatio: 1.0,
                                         mainAxisSpacing: 0.0,
-                                        crossAxisSpacing: 0.3,
+                                        crossAxisSpacing: 0.0,
                                       ),
                                       itemCount: firstDayOfWeek + daysInMonth,
                                       itemBuilder: (context, index) {
