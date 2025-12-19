@@ -1470,11 +1470,6 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                         final firstDayOfWeek = firstDayOfMonth.weekday % 7; // 0=domingo, 1=segunda, ..., 6=sábado
                         final daysInMonth = DateTime(_selectedYear, month + 1, 0).day;
                         
-                        // Calcular feriados do mês
-                        final monthHolidays = holidayDays
-                            .where((k) => k.startsWith('$_selectedYear-${month.toString().padLeft(2, '0')}-'))
-                            .toList();
-                        
                         return Card(
                           elevation: 1,
                           child: Padding(
@@ -1555,29 +1550,6 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                     },
                                   ),
                                 ),
-                                // Descrição de feriado embaixo do mês
-                                if (monthHolidays.isNotEmpty)
-                                  Padding(
-                                    padding: EdgeInsets.only(top: 2),
-                                    child: SizedBox(
-                                      height: 15,
-                                      child: SingleChildScrollView(
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            for (final key in monthHolidays)
-                                              Text(
-                                                holidayNames[key] ?? '',
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                textAlign: TextAlign.center,
-                                                style: TextStyle(fontSize: 6, height: 1.0),
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
                               ],
                             ),
                           ),
