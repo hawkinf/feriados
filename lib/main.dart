@@ -1444,15 +1444,15 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                   ),
                   // GRID ANUAL
                   Expanded(
-                    child: Column(
-                      children: [
-                        Text(
-                          _selectedYear.toString(),
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
-                        ),
-                        SizedBox(height: 8),
-                        Expanded(
-                          child: GridView.builder(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          Text(
+                            _selectedYear.toString(),
+                            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                          ),
+                          SizedBox(height: 8),
+                          GridView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -1498,7 +1498,8 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                       ))
                                       .toList(),
                                 ),
-                                Flexible(
+                                SizedBox(
+                                  height: 120,
                                   child: GridView.builder(
                                     shrinkWrap: true,
                                     physics: const NeverScrollableScrollPhysics(),
@@ -1583,8 +1584,8 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                         );
                       },
                     ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   // SETA DIREITA
