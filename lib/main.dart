@@ -781,18 +781,18 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('RESUMO DO ANO', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: fontSize + 2, color: Theme.of(context).colorScheme.primary)),
-            const Divider(height: 24),
+            const Divider(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(child: _buildStatBadge('Dias Úteis', stats.diasUteis, Colors.indigo, fontSize)),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 Expanded(child: _buildStatBadge('Finais de Semana', stats.finaisSemana, Colors.red, fontSize)),
               ],
             ),
-            const Divider(height: 24),
+            const Divider(height: 8),
              Text('Por Tipo', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
+            const SizedBox(height: 4),
             // Uso de cores dinâmicas para fundo (claro em Light, transparente em Dark) e texto (preto em Light, branco em Dark)
             _buildStatRow(context, 'Nacionais', stats.nacionais, isDark ? Colors.white : Colors.black87, backgroundColor: isDark ? Colors.blue.withValues(alpha: 0.2) : Colors.blue[50]),
             _buildStatRow(context, 'Municipais', stats.municipais, isDark ? Colors.white : Colors.black87, backgroundColor: isDark ? Colors.orange.withValues(alpha: 0.2) : Colors.orange[50]),
@@ -806,12 +806,12 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
   
   Widget _buildStatBadge(String label, int value, Color color, double fontSize) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withValues(alpha: 0.3))),
       child: Column(
         children: [
           Text(value.toString(), style: TextStyle(fontSize: fontSize + 10, fontWeight: FontWeight.bold, color: color)),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(label, style: TextStyle(fontSize: fontSize - 2, color: color.withValues(alpha: 0.8), fontWeight: FontWeight.w500), textAlign: TextAlign.center),
         ],
       ),
@@ -827,7 +827,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
         color: backgroundColor ?? Colors.transparent,
         borderRadius: BorderRadius.circular(4),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
       child: Row(
         children: [
           Expanded(child: Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: textColor, fontWeight: FontWeight.w500))),
@@ -945,12 +945,15 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
           debugPrint('Carregando feriados...');
         }
         
-        return Card(
-          elevation: 1,
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          child: Padding(
-            padding: EdgeInsets.all(isMobile ? 0.15 : 0.2),
-            child: Row(
+        return Transform.scale(
+          scale: 0.92,
+          alignment: Alignment.topCenter,
+          child: Card(
+            elevation: 1,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: Padding(
+              padding: EdgeInsets.all(isMobile ? 0.15 : 0.2),
+              child: Row(
               children: [
                 // SETA ESQUERDA - RETROCEDEM MÊS
                 SizedBox(
@@ -1123,6 +1126,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
               ],
             ),
           ),
+        ),
         );
       },
     );
@@ -1188,6 +1192,38 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                 children: [
                   _buildCalendarGrid(),
                   SizedBox(height: isMobile ? 28 : 24),
+                  // AÑO REFERENCIA COM DROPDOWN
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Ano Referência:',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(width: 12),
+                        DropdownButton<int>(
+                          value: _selectedYear,
+                          items: availableYears.map((year) {
+                            return DropdownMenuItem<int>(
+                              value: year,
+                              child: Text(year.toString()),
+                            );
+                          }).toList(),
+                          onChanged: (year) {
+                            if (year != null) {
+                              setState(() {
+                                _selectedYear = year;
+                                _holidaysFuture = _fetchHolidays(_selectedYear);
+                              });
+                              _savePreferences();
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   FutureBuilder<List<Holiday>>(
                     future: _holidaysFuture,
                     builder: (context, snapshot) {
