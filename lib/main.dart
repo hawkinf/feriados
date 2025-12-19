@@ -1541,7 +1541,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                         crossAxisCount: 7,
                                         childAspectRatio: 1.0,
-                                        mainAxisSpacing: 0.05,
+                                        mainAxisSpacing: 0.0,
                                         crossAxisSpacing: 0.3,
                                       ),
                                       itemCount: firstDayOfWeek + daysInMonth,
