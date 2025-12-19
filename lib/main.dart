@@ -1747,31 +1747,34 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                   SizedBox(height: 16),
                   // TIPO DE CALENDÁRIO
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Tipo Calendário:',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outline,
+                          width: 2,
                         ),
-                        const SizedBox(width: 12),
-                        DropdownButton<String>(
-                          value: _calendarType,
-                          items: const [
-                            DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
-                            DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
-                            DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
-                          ],
-                          onChanged: (type) {
-                            if (type != null) {
-                              setState(() {
-                                _calendarType = type;
-                              });
-                            }
-                          },
-                        ),
-                      ],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: DropdownButton<String>(
+                        value: _calendarType,
+                        isExpanded: true,
+                        underline: const SizedBox(),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+                        items: const [
+                          DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
+                          DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
+                          DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
+                        ],
+                        onChanged: (type) {
+                          if (type != null) {
+                            setState(() {
+                              _calendarType = type;
+                            });
+                          }
+                        },
+                      ),
                     ),
                   ),
                   SizedBox(height: 16),
