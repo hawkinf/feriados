@@ -1455,18 +1455,22 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                 'CalendarPRO - ',
                                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
                               ),
-                              DropdownButton<CityData>(
-                                value: _selectedCity,
-                                items: cities.where((city) => city.region == 'Vale do Paraíba').map((city) => DropdownMenuItem<CityData>(value: city, child: Text(city.name, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.primary)))).toList(),
-                                onChanged: (newCity) {
-                                  if (newCity != null) {
-                                    setState(() {
-                                      _selectedCity = newCity;
-                                      _holidaysFuture = _fetchHolidays(_selectedYear);
-                                    });
-                                  }
-                                },
-                                underline: const SizedBox(),
+                              Expanded(
+                                child: Center(
+                                  child: DropdownButton<CityData>(
+                                    value: _selectedCity,
+                                    items: cities.where((city) => city.region == 'Vale do Paraíba').map((city) => DropdownMenuItem<CityData>(value: city, child: Text(city.name, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.primary), overflow: TextOverflow.ellipsis))).toList(),
+                                    onChanged: (newCity) {
+                                      if (newCity != null) {
+                                        setState(() {
+                                          _selectedCity = newCity;
+                                          _holidaysFuture = _fetchHolidays(_selectedYear);
+                                        });
+                                      }
+                                    },
+                                    underline: const SizedBox(),
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -1614,35 +1618,6 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                           );
                         },
                               ),
-                          ),
-                          // TIPO DE CALENDÁRIO
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 16),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Tipo Calendário:',
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(width: 12),
-                                DropdownButton<String>(
-                                  value: _calendarType,
-                                  items: const [
-                                    DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
-                                    DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
-                                    DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
-                                  ],
-                                  onChanged: (type) {
-                                    if (type != null) {
-                                      setState(() {
-                                        _calendarType = type;
-                                      });
-                                    }
-                                  },
-                                ),
-                              ],
-                            ),
                           ),
                         ],
                       ),
@@ -1798,6 +1773,36 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                       
                       return SizedBox.shrink();
                     },
+                  ),
+                  SizedBox(height: 16),
+                  // TIPO DE CALENDÁRIO
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Tipo Calendário:',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(width: 12),
+                        DropdownButton<String>(
+                          value: _calendarType,
+                          items: const [
+                            DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
+                            DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
+                            DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
+                          ],
+                          onChanged: (type) {
+                            if (type != null) {
+                              setState(() {
+                                _calendarType = type;
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                   SizedBox(height: 16),
                   // CALENDÁRIO CONFORME TIPO SELECIONADO
