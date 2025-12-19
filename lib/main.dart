@@ -1678,104 +1678,115 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // PRÓXIMO FERIADO
-                  FutureBuilder<({String name, int daysUntil})?>(
-                    future: _getNextHoliday(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return SizedBox.shrink();
-                      }
-                      
-                      if (snapshot.hasData && snapshot.data != null) {
-                        final nextHoliday = snapshot.data!;
-                        final daysWord = nextHoliday.daysUntil == 1 ? 'dia' : 'dias';
-                        
-                        return Card(
-                          elevation: 2,
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          child: Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                Icon(Icons.event_available, color: Theme.of(context).colorScheme.primary, size: 28),
-                                SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                  // PRÓXIMO FERIADO E TIPO DE CALENDÁRIO
+                  Row(
+                    children: [
+                      // PRÓXIMO FERIADO
+                      Expanded(
+                        flex: 2,
+                        child: FutureBuilder<({String name, int daysUntil})?>(
+                          future: _getNextHoliday(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return SizedBox.shrink();
+                            }
+
+                            if (snapshot.hasData && snapshot.data != null) {
+                              final nextHoliday = snapshot.data!;
+                              final daysWord = nextHoliday.daysUntil == 1 ? 'dia' : 'dias';
+
+                              return Card(
+                                elevation: 2,
+                                color: Theme.of(context).colorScheme.primaryContainer,
+                                child: Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: Row(
                                     children: [
-                                      Text(
-                                        'Próximo Feriado',
-                                        style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                                      Icon(Icons.event_available, color: Theme.of(context).colorScheme.primary, size: 28),
+                                      SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Próximo Feriado',
+                                              style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                                            ),
+                                            SizedBox(height: 4),
+                                            Text(
+                                              nextHoliday.name,
+                                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onPrimaryContainer),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                      SizedBox(height: 4),
-                                      Text(
-                                        nextHoliday.name,
-                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onPrimaryContainer),
+                                      Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.primary,
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              nextHoliday.daysUntil.toString(),
+                                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                                            ),
+                                            Text(
+                                              daysWord,
+                                              style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.primary,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        nextHoliday.daysUntil.toString(),
-                                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                                      ),
-                                      Text(
-                                        daysWord,
-                                        style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                              );
+                            }
+
+                            return SizedBox.shrink();
+                          },
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      // TIPO DE CALENDÁRIO
+                      Expanded(
+                        flex: 1,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Theme.of(context).colorScheme.outline,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: DropdownButton<String>(
+                              value: _calendarType,
+                              isExpanded: true,
+                              underline: const SizedBox(),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+                              items: const [
+                                DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
+                                DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
+                                DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
                               ],
+                              onChanged: (type) {
+                                if (type != null) {
+                                  setState(() {
+                                    _calendarType = type;
+                                  });
+                                }
+                              },
                             ),
                           ),
-                        );
-                      }
-                      
-                      return SizedBox.shrink();
-                    },
-                  ),
-                  SizedBox(height: 16),
-                  // TIPO DE CALENDÁRIO
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outline,
-                          width: 2,
                         ),
-                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: DropdownButton<String>(
-                        value: _calendarType,
-                        isExpanded: true,
-                        underline: const SizedBox(),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
-                        items: const [
-                          DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
-                          DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
-                          DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
-                        ],
-                        onChanged: (type) {
-                          if (type != null) {
-                            setState(() {
-                              _calendarType = type;
-                            });
-                          }
-                        },
-                      ),
-                    ),
+                    ],
                   ),
                   SizedBox(height: 16),
                   // CALENDÁRIO CONFORME TIPO SELECIONADO
