@@ -870,7 +870,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     final double titleFontSize = (fontSize - 1) * 2.2;
     
     final now = DateTime(_selectedYear, _calendarMonth, 1);
-    final firstDayOfWeek = now.weekday == 7 ? 1 : now.weekday + 1;
+    final firstDayOfWeek = now.weekday % 7; // 0=domingo, 1=segunda, ..., 6=sábado
     final daysInMonth = DateTime(_selectedYear, _calendarMonth + 1, 0).day;
     final prevMonthDays = DateTime(_selectedYear, _calendarMonth, 0).day;
     
@@ -891,8 +891,8 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     final List<String> dayHeaders = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
     List<({int day, int month, int year, bool isCurrentMonth})> calendarDays = [];
     
-    // Dias do mês anterior
-    for (int i = prevMonthDays - firstDayOfWeek + 2; i <= prevMonthDays; i++) {
+    // Dias do mês anterior (apenas os necessários para preencher o inicio da primeira semana)
+    for (int i = prevMonthDays - firstDayOfWeek + 1; i <= prevMonthDays; i++) {
       calendarDays.add((day: i, month: prevMonth, year: prevYear, isCurrentMonth: false));
     }
     
