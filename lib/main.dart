@@ -862,7 +862,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     }
   }
 
-  /// Calcula o próximo feriado (nacional ou bancário) a partir de hoje e retorna nome + dias restantes
+  /// Calcula o próximo feriado (nacional, bancário ou municipal da cidade selecionada) a partir de hoje e retorna nome + dias restantes
   Future<({String name, int daysUntil})?> _getNextHoliday() async {
     try {
       // Buscar feriados do ano atual e próximo ano para garantir que encontramos o próximo
@@ -875,16 +875,18 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
       final today = DateTime.now();
       final todayDate = DateTime(today.year, today.month, today.day);
       
-      // Encontrar o próximo feriado nacional ou bancário (ignorar municipais)
+      // Encontrar o próximo feriado nacional, bancário ou municipal da cidade selecionada
       Holiday? nextHoliday;
       int minDaysDiff = 999999;
       
       for (final holiday in allHolidays) {
         try {
-          // Filtrar apenas feriados nacionais e bancários (ignorar municipais)
+          // Filtrar apenas feriados nacionais, bancários ou municipais da cidade selecionada
           final types = holiday.types;
-          final isMunicipal = types.any((t) => t.contains('Municipal'));
-          if (isMunicipal) continue; // Pular feriados municipais
+          final isNationalOrBancario = types.any((t) => !t.contains('Municipal'));
+          final isMunicipalThisCity = types.any((t) => t.contains('Municipal') && t.contains(_selectedCity.name));
+          
+          if (!isNationalOrBancario && !isMunicipalThisCity) continue; // Pular feriados municipais de outras cidades
           
           final holidayDate = DateTime.parse(holiday.date);
           final normalizedHolidayDate = DateTime(holidayDate.year, holidayDate.month, holidayDate.day);
