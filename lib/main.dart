@@ -1415,13 +1415,13 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
         }
         
         return Transform.scale(
-          scale: 0.92,
+          scale: 0.80,
           alignment: Alignment.topCenter,
           child: Card(
             elevation: 1,
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
             child: Padding(
-              padding: EdgeInsets.all(12),
+              padding: EdgeInsets.all(8),
               child: Row(
                 children: [
                   // SETA ESQUERDA
@@ -1449,9 +1449,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 4,
-                        childAspectRatio: 0.75,
-                        mainAxisSpacing: 1,
-                        crossAxisSpacing: 1,
+                        childAspectRatio: 0.55,
+                        mainAxisSpacing: 0,
+                        crossAxisSpacing: 0,
                       ),
                       itemCount: 12,
                       itemBuilder: (context, monthIndex) {
@@ -1470,12 +1470,12 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                         return Card(
                           elevation: 1,
                           child: Padding(
-                            padding: EdgeInsets.all(4),
+                            padding: EdgeInsets.all(2),
                             child: Column(
                               children: [
                                 Text(
                                   '${monthNames[monthIndex]} $_selectedYear',
-                                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                                  style: TextStyle(fontSize: 7, fontWeight: FontWeight.bold),
                                 ),
                                 Expanded(
                                   child: GridView.builder(
@@ -1525,7 +1525,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                         child: Center(
                                           child: Text(
                                             day.toString(),
-                                            style: TextStyle(fontSize: 7, fontWeight: FontWeight.bold, color: textColor),
+                                            style: TextStyle(fontSize: 6, fontWeight: FontWeight.bold, color: textColor),
                                           ),
                                         ),
                                       );
@@ -1535,9 +1535,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                 // Descrição de feriado embaixo do mês
                                 if (monthHolidays.isNotEmpty)
                                   Padding(
-                                    padding: EdgeInsets.only(top: 2),
+                                    padding: EdgeInsets.only(top: 1),
                                     child: SizedBox(
-                                      height: 16,
+                                      height: 12,
                                       child: SingleChildScrollView(
                                         child: Column(
                                           mainAxisSize: MainAxisSize.min,
@@ -1548,7 +1548,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
                                                 textAlign: TextAlign.center,
-                                                style: TextStyle(fontSize: 5, height: 1.0),
+                                                style: TextStyle(fontSize: 4, height: 1.0),
                                               ),
                                           ],
                                         ),
