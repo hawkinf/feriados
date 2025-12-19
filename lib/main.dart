@@ -1442,6 +1442,14 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                       ),
                     ),
                   ),
+                  // ANO EM DESTAQUE
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      _selectedYear.toString(),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                    ),
+                  ),
                   // GRID ANUAL
                   Expanded(
                     child: GridView.builder(
@@ -1449,7 +1457,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 4,
-                        childAspectRatio: 0.55,
+                        childAspectRatio: 0.65,
                         mainAxisSpacing: 0,
                         crossAxisSpacing: 0,
                       ),
@@ -1474,8 +1482,21 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                             child: Column(
                               children: [
                                 Text(
-                                  '${monthNames[monthIndex]} $_selectedYear',
+                                  monthNames[monthIndex],
                                   style: TextStyle(fontSize: 7, fontWeight: FontWeight.bold),
+                                ),
+                                // Header com dias da semana
+                                Row(
+                                  children: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
+                                      .map((day) => Expanded(
+                                        child: Center(
+                                          child: Text(
+                                            day,
+                                            style: TextStyle(fontSize: 4, fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                      ))
+                                      .toList(),
                                 ),
                                 Expanded(
                                   child: GridView.builder(
