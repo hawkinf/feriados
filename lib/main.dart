@@ -1560,10 +1560,10 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                           ...[
                                             if (holidayNames.containsKey('$_selectedYear-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}'))
                                               Padding(
-                                                padding: const EdgeInsets.symmetric(vertical: 2),
+                                                padding: const EdgeInsets.symmetric(vertical: 1),
                                                 child: Text(
                                                   '$day - ${holidayNames['$_selectedYear-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}']!}',
-                                                  style: TextStyle(fontSize: 48, fontWeight: FontWeight.w600, color: Colors.grey[800]),
+                                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey[800]),
                                                   textAlign: TextAlign.left,
                                                   maxLines: 2,
                                                   overflow: TextOverflow.ellipsis,
