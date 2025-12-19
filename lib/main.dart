@@ -1550,21 +1550,22 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                     ),
                                 // FERIADOS DO MÊS
                                 if (holidayDays.isNotEmpty) ...[
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 6),
                                   Container(
-                                    alignment: Alignment.center,
+                                    alignment: Alignment.centerLeft,
                                     child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         for (int day = 1; day <= daysInMonth; day++)
                                           ...[
                                             if (holidayNames.containsKey('$_selectedYear-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}'))
                                               Padding(
-                                                padding: const EdgeInsets.symmetric(vertical: 1),
+                                                padding: const EdgeInsets.symmetric(vertical: 2),
                                                 child: Text(
                                                   '$day - ${holidayNames['$_selectedYear-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}']!}',
-                                                  style: TextStyle(fontSize: 6, fontWeight: FontWeight.w500, color: Colors.grey[700]),
-                                                  textAlign: TextAlign.center,
-                                                  maxLines: 1,
+                                                  style: TextStyle(fontSize: 48, fontWeight: FontWeight.w600, color: Colors.grey[800]),
+                                                  textAlign: TextAlign.left,
+                                                  maxLines: 2,
                                                   overflow: TextOverflow.ellipsis,
                                                 ),
                                               ),
