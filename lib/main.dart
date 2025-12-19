@@ -232,7 +232,11 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
   late AnimationController _animationController;
   bool _isLoading = true;
   bool _isDarkMode = false;
-  
+
+  // Cache para "Próximo Feriado"
+  ({String name, int daysUntil})? _cachedNextHoliday;
+  DateTime? _cachedNextHolidayDate;
+
   final List<int> availableYears = List.generate(11, (index) => DateTime.now().year - 5 + index);
 
   late final List<CityData> cities;
@@ -868,35 +872,45 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
   /// Calcula o próximo feriado (nacional, bancário ou municipal da cidade selecionada) a partir de hoje e retorna nome + dias restantes
   Future<({String name, int daysUntil})?> _getNextHoliday() async {
     try {
+      final today = DateTime.now();
+      final todayDate = DateTime(today.year, today.month, today.day);
+
+      // Verificar se o cache ainda é válido (mesmo dia)
+      if (_cachedNextHoliday != null && _cachedNextHolidayDate != null) {
+        final cachedDate = DateTime(_cachedNextHolidayDate!.year, _cachedNextHolidayDate!.month, _cachedNextHolidayDate!.day);
+        if (cachedDate == todayDate) {
+          // Cache ainda é válido
+          return _cachedNextHoliday;
+        }
+      }
+
+      // Cache inválido ou não existe, recalcular
       // Buscar feriados do ano atual e próximo ano para garantir que encontramos o próximo
       final currentYearHolidays = await _fetchHolidays(_selectedYear);
       final nextYearHolidays = await _fetchHolidays(_selectedYear + 1);
       final allHolidays = [...currentYearHolidays, ...nextYearHolidays];
-      
+
       if (allHolidays.isEmpty) return null;
-      
-      final today = DateTime.now();
-      final todayDate = DateTime(today.year, today.month, today.day);
-      
+
       // Encontrar o próximo feriado nacional, bancário ou municipal da cidade selecionada
       Holiday? nextHoliday;
       int minDaysDiff = 999999;
-      
+
       for (final holiday in allHolidays) {
         try {
           // Filtrar apenas feriados nacionais, bancários ou municipais da cidade selecionada
           final types = holiday.types;
           final isNationalOrBancario = types.any((t) => !t.contains('Municipal'));
           final isMunicipalThisCity = types.any((t) => t.contains('Municipal') && t.contains(_selectedCity.name));
-          
+
           if (!isNationalOrBancario && !isMunicipalThisCity) continue; // Pular feriados municipais de outras cidades
-          
+
           final holidayDate = DateTime.parse(holiday.date);
           final normalizedHolidayDate = DateTime(holidayDate.year, holidayDate.month, holidayDate.day);
-          
+
           // Calcular dias até este feriado
           int daysDiff = normalizedHolidayDate.difference(todayDate).inDays;
-          
+
           // Se é hoje ou no futuro, e é o mais próximo até agora
           if (daysDiff >= 0 && daysDiff < minDaysDiff) {
             minDaysDiff = daysDiff;
@@ -906,10 +920,15 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
           // Ignorar datas inválidas
         }
       }
-      
+
       if (nextHoliday == null) return null;
-      
-      return (name: nextHoliday.name, daysUntil: minDaysDiff);
+
+      // Atualizar cache
+      final result = (name: nextHoliday.name, daysUntil: minDaysDiff);
+      _cachedNextHoliday = result;
+      _cachedNextHolidayDate = todayDate;
+
+      return result;
     } catch (e) {
       debugPrint('Erro ao buscar próximo feriado: $e');
       return null;
