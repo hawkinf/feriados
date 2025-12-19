@@ -715,12 +715,20 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
 
   HolidayStats _calculateStats(List<Holiday> holidays) {
     final stats = HolidayStats();
-    final Set<String> uniqueDates = {};
+    final Map<String, Holiday> uniqueHolidaysMap = {}; // Map para manter apenas um por data
 
+    // Primeiro, remover duplicatas por data e manter apenas uma por data
     for (var holiday in holidays) {
-      // Determinar tipo com prioridade: Nacional > Estadual > Municipal > Bancário
+      if (!uniqueHolidaysMap.containsKey(holiday.date)) {
+        uniqueHolidaysMap[holiday.date] = holiday;
+      }
+    }
+
+    // Contar estatísticas baseado em feriados únicos
+    for (var holiday in uniqueHolidaysMap.values) {
       bool isNacional = false, isEstadual = false, isMunicipal = false, isBancario = false;
 
+      // Determinar tipos com prioridade: Nacional > Estadual > Municipal > Bancário
       for (var type in holiday.types) {
         if (type.contains('Nacional')) isNacional = true;
         if (type.contains('Estadual')) isEstadual = true;
@@ -728,14 +736,18 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
         if (type.contains('Bancário')) isBancario = true;
       }
 
-      // Contar por tipo (com repetição, para manter compatibilidade)
-      if (isBancario) stats.bancarios++;
-      if (isNacional) stats.nacionais++;
-      if (isEstadual) stats.estaduais++;
-      if (isMunicipal) stats.municipais++;
+      // Contar por tipo (cada feriado conta uma vez, em sua categoria prioritária)
+      if (isNacional) {
+        stats.nacionais++;
+      } else if (isEstadual) {
+        stats.estaduais++;
+      } else if (isMunicipal) {
+        stats.municipais++;
+      } else if (isBancario) {
+        stats.bancarios++;
+      }
 
-      // Contar único por data com prioridade
-      uniqueDates.add(holiday.date);
+      stats.totalFeriadosUnicos++;
 
       try {
         final date = DateFormat('yyyy-MM-dd').parse(holiday.date);
@@ -757,8 +769,6 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
       }
     }
 
-    // Total de feriados únicos (por data)
-    stats.totalFeriadosUnicos = uniqueDates.length;
     return stats;
   }
 
