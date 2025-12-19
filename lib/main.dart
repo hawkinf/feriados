@@ -241,6 +241,8 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
   void initState() {
     super.initState();
     _selectedWeek = DateTime.now();
+    _selectedYear = DateTime.now().year;
+    _calendarMonth = DateTime.now().month;
     _initializeCities();
     _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
     _loadPreferences();
@@ -378,8 +380,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
           _selectedCity = cities[cityIndex];
         }
       }
-      final savedYear = prefs.getInt('selectedYear');
-      if (savedYear != null && availableYears.contains(savedYear)) _selectedYear = savedYear;
+      // Sempre usar data atual, não carregar ano anterior
+      _selectedYear = DateTime.now().year;
+      _calendarMonth = DateTime.now().month;
       final savedDarkMode = prefs.getBool('isDarkMode');
       if (savedDarkMode != null) _isDarkMode = savedDarkMode;
     } catch (e) {
@@ -396,7 +399,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('selectedCity', _selectedCity.name);
-      await prefs.setInt('selectedYear', _selectedYear);
+      // Não salvar year pois sempre iniciamos com data atual
       await prefs.setBool('isDarkMode', _isDarkMode);
     } catch (e) {
       debugPrint('Erro: $e');
