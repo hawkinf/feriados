@@ -1510,6 +1510,10 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
 
                           return Card(
                             elevation: 1,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: const BorderSide(color: Colors.black, width: 1.5),
+                            ),
                             child: Padding(
                               padding: EdgeInsets.all(2),
                               child: Column(
