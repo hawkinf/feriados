@@ -1447,33 +1447,6 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                     child: SingleChildScrollView(
                       child: Column(
                         children: [
-                          // TÍTULO COM SELETOR DE CIDADE
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'CalendarPRO - ',
-                                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
-                              ),
-                              Expanded(
-                                child: Center(
-                                  child: DropdownButton<CityData>(
-                                    value: _selectedCity,
-                                    items: cities.where((city) => city.region == 'Vale do Paraíba').map((city) => DropdownMenuItem<CityData>(value: city, child: Text(city.name, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.primary), overflow: TextOverflow.ellipsis))).toList(),
-                                    onChanged: (newCity) {
-                                      if (newCity != null) {
-                                        setState(() {
-                                          _selectedCity = newCity;
-                                          _holidaysFuture = _fetchHolidays(_selectedYear);
-                                        });
-                                      }
-                                    },
-                                    underline: const SizedBox(),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
                           SizedBox(height: 16),
                           // PRÓXIMO FERIADO
                           FutureBuilder<({String name, int daysUntil})?>(
@@ -1538,7 +1511,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                           return Card(
                             elevation: 1,
                             child: Padding(
-                              padding: EdgeInsets.all(6),
+                              padding: EdgeInsets.all(2),
                               child: Column(
                                 children: [
                                   Text(
