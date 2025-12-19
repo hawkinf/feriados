@@ -1550,9 +1550,10 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                     ),
                                 // FERIADOS DO MÊS
                                 if (holidayDays.isNotEmpty) ...[
-                                  const SizedBox(height: 6),
+                                  const SizedBox(height: 12),
                                   Container(
                                     alignment: Alignment.centerLeft,
+                                    padding: const EdgeInsets.only(top: 8, left: 4, right: 4),
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -1560,10 +1561,10 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                           ...[
                                             if (holidayNames.containsKey('$_selectedYear-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}'))
                                               Padding(
-                                                padding: const EdgeInsets.symmetric(vertical: 1),
+                                                padding: const EdgeInsets.symmetric(vertical: 3),
                                                 child: Text(
                                                   '$day - ${holidayNames['$_selectedYear-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}']!}',
-                                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey[800]),
+                                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey[800]),
                                                   textAlign: TextAlign.left,
                                                   maxLines: 2,
                                                   overflow: TextOverflow.ellipsis,
