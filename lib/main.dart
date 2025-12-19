@@ -1154,16 +1154,20 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
         Set<String> holidayDays = {};
         
         if (snapshot.hasData) {
+          debugPrint('=== SEMANAL DEBUG ===');
+          debugPrint('Total de feriados carregados: ${snapshot.data!.length}');
           for (final holiday in snapshot.data!) {
             try {
               final holidayDate = DateTime.parse(holiday.date);
               final key = '${holidayDate.year}-${holidayDate.month.toString().padLeft(2, '0')}-${holidayDate.day.toString().padLeft(2, '0')}';
               holidayDays.add(key);
               holidayNames[key] = holiday.name;
+              debugPrint('Feriado: ${holiday.name} em $key');
             } catch (e) {
               // Erro ao parsear feriado
             }
           }
+          debugPrint('Feriados da semana ${startOfWeek.toIso8601String()}: ${holidayDays.length}');
         }
         
         return Transform.scale(
@@ -1197,6 +1201,11 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                             onPressed: () {
                               setState(() {
                                 _selectedWeek = _selectedWeek.subtract(Duration(days: 7));
+                                // Atualizar _selectedYear se mudar de ano
+                                if (_selectedWeek.year != _selectedYear) {
+                                  _selectedYear = _selectedWeek.year;
+                                  _holidaysFuture = _fetchHolidays(_selectedYear);
+                                }
                               });
                             },
                           ),
@@ -1280,6 +1289,11 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                             onPressed: () {
                               setState(() {
                                 _selectedWeek = _selectedWeek.add(Duration(days: 7));
+                                // Atualizar _selectedYear se mudar de ano
+                                if (_selectedWeek.year != _selectedYear) {
+                                  _selectedYear = _selectedWeek.year;
+                                  _holidaysFuture = _fetchHolidays(_selectedYear);
+                                }
                               });
                             },
                           ),
@@ -1597,6 +1611,10 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                               setState(() {
                                 _selectedYear = year;
                                 _holidaysFuture = _fetchHolidays(_selectedYear);
+                                // Se estamos no calendário semanal, ajustar a semana para o ano selecionado
+                                if (_calendarType == 'semanal' && _selectedWeek.year != year) {
+                                  _selectedWeek = DateTime(year, 1, 1); // Começa no dia 1 do ano
+                                }
                               });
                               _savePreferences();
                             }
