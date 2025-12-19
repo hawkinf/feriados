@@ -1872,6 +1872,16 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                       } else if (snapshot.hasData) {
                         final holidays = snapshot.data!;
                         if (holidays.isEmpty) return Center(child: Padding(padding: const EdgeInsets.all(40.0), child: Column(children: [Icon(Icons.event_busy, size: 48, color: Colors.grey[400]), const SizedBox(height: 16), Text('Nenhum feriado encontrado', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: fontSize))])));
+
+                        // Deduplica feriados por data
+                        final Map<String, Holiday> uniqueHolidaysMap = {};
+                        for (var holiday in holidays) {
+                          if (!uniqueHolidaysMap.containsKey(holiday.date)) {
+                            uniqueHolidaysMap[holiday.date] = holiday;
+                          }
+                        }
+                        final uniqueHolidays = uniqueHolidaysMap.values.toList();
+
                         final stats = _calculateStats(holidays);
                         return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1882,9 +1892,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                               ListView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
-                                itemCount: holidays.length,
+                                itemCount: uniqueHolidays.length,
                                 itemBuilder: (context, index) {
-                                  final holiday = holidays[index];
+                                  final holiday = uniqueHolidays[index];
                                   final formattedDate = _formatDate(holiday.date);
                                   bool isWeekend = false;
                                   try { isWeekend = (DateFormat('yyyy-MM-dd').parse(holiday.date).weekday == DateTime.saturday || DateFormat('yyyy-MM-dd').parse(holiday.date).weekday == DateTime.sunday); } catch (e) {
