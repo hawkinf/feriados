@@ -428,8 +428,22 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
         throw Exception('Falha ao carregar feriados nacionais.');
       }
       
-      // NÃO carregar feriados do próximo ano - apenas mostrar o ano selecionado
-      
+      // CARREGAR TAMBÉM FERIADOS DO PRÓXIMO ANO (para exibir em dezembro/janeiro)
+      final nextYear = year + 1;
+      final uriProximo = Uri.parse('https://brasilapi.com.br/api/feriados/v1/$nextYear');
+      final responseProximo = await http.get(uriProximo);
+      if (responseProximo.statusCode == 200) {
+        List jsonList = json.decode(responseProximo.body);
+        for (var json in jsonList) {
+          final holiday = Holiday.fromJson(json);
+          // Adicionar apenas feriados de janeiro e fevereiro do próximo ano
+          final holidayDate = DateTime.parse(holiday.date);
+          if (holidayDate.month <= 2) {
+            holidaysMap[holiday.date] = holiday;
+          }
+        }
+      }
+
       // Adicionar feriado bancário de último dia do ano
       final lastDay = DateTime(year, 12, 31);
       String specialNote = '';
