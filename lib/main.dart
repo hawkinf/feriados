@@ -1061,7 +1061,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                       Center(
                         child: Text(
                           '$monthName / $_selectedYear',
-                          style: TextStyle(fontSize: titleFontSize * 0.9, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+                          style: TextStyle(fontSize: titleFontSize * 0.9, fontWeight: FontWeight.bold, color: Colors.blue),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -1289,7 +1289,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                   // CABEÇALHO SEMANA/MÊS/ANO
                   Text(
                     'Semana: # $weekNumber - ${monthNamesComplete[startOfWeek.month - 1]} ${startOfWeek.year}',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue),
                   ),
                   SizedBox(height: 12),
                   // CONTEÚDO DA SEMANA
@@ -1476,7 +1476,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                           Center(
                             child: Text(
                               '$_selectedYear',
-                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue),
                             ),
                           ),
                           SizedBox(height: 16),
@@ -1832,42 +1832,6 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                   else if (_calendarType == 'anual')
                     _buildAnnualCalendar(),
                   SizedBox(height: isMobile ? 28 : 24),
-                  // AÑO REFERENCIA COM DROPDOWN
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-                    child: Row(
-                      children: [
-                        Text(
-                          'Ano Referência:',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(width: 12),
-                        DropdownButton<int>(
-                          value: _selectedYear,
-                          items: availableYears.map((year) {
-                            return DropdownMenuItem<int>(
-                              value: year,
-                              child: Text(year.toString()),
-                            );
-                          }).toList(),
-                          onChanged: (year) {
-                            if (year != null) {
-                              setState(() {
-                                _selectedYear = year;
-                                _holidaysFuture = _fetchHolidays(_selectedYear);
-                                // Se estamos no calendário semanal, ajustar a semana para o ano selecionado
-                                if (_calendarType == 'semanal' && _selectedWeek.year != year) {
-                                  _selectedWeek = DateTime(year, 1, 1); // Começa no dia 1 do ano
-                                }
-                              });
-                              _savePreferences();
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
                   FutureBuilder<List<Holiday>>(
                     future: _holidaysFuture,
                     builder: (context, snapshot) {
