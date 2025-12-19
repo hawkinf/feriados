@@ -759,6 +759,11 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
           children: [
             Text('RESUMO DO ANO $_selectedYear', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: fontSize + 2, color: Theme.of(context).colorScheme.primary)),
             const Divider(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: _buildStatBadge('Total de Feriados', stats.nacionais + stats.municipais + stats.bancarios + stats.estaduais, Colors.green, fontSize),
+            ),
+            const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
