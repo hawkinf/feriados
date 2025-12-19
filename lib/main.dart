@@ -1442,14 +1442,6 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                       ),
                     ),
                   ),
-                  // ANO EM DESTAQUE
-                  Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    child: Text(
-                      _selectedYear.toString(),
-                      style: TextStyle(fontSize: 31, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
-                    ),
-                  ),
                   // GRID ANUAL
                   Expanded(
                     child: GridView.builder(
@@ -1467,7 +1459,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                         final monthNames = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
                         final now = DateTime.now();
                         final firstDayOfMonth = DateTime(_selectedYear, month, 1);
-                        final firstDayOfWeek = firstDayOfMonth.weekday == 7 ? 1 : firstDayOfMonth.weekday + 1;
+                        final firstDayOfWeek = firstDayOfMonth.weekday % 7; // 0=domingo, 1=segunda, ..., 6=sábado
                         final daysInMonth = DateTime(_selectedYear, month + 1, 0).day;
                         
                         // Calcular feriados do mês
@@ -1508,13 +1500,13 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                       mainAxisSpacing: 0.3,
                                       crossAxisSpacing: 0.3,
                                     ),
-                                    itemCount: firstDayOfWeek - 1 + daysInMonth,
+                                    itemCount: firstDayOfWeek + daysInMonth,
                                     itemBuilder: (context, index) {
-                                      if (index < firstDayOfWeek - 1) {
+                                      if (index < firstDayOfWeek) {
                                         return SizedBox.shrink();
                                       }
                                       
-                                      final day = index - (firstDayOfWeek - 1) + 1;
+                                      final day = index - firstDayOfWeek + 1;
                                       final dateObj = DateTime(_selectedYear, month, day);
                                       final dayOfWeek = dateObj.weekday % 7; // 0=domingo, 1=segunda, ..., 6=sábado
                                       final isToday = now.year == _selectedYear && now.month == month && now.day == day;
