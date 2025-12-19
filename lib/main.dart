@@ -1415,13 +1415,13 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
         }
         
         return Transform.scale(
-          scale: 0.80,
+          scale: 1.0,
           alignment: Alignment.topCenter,
           child: Card(
             elevation: 1,
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
             child: Padding(
-              padding: EdgeInsets.all(8),
+              padding: EdgeInsets.all(10),
               child: Row(
                 children: [
                   // SETA ESQUERDA
@@ -1444,10 +1444,10 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                   ),
                   // ANO EM DESTAQUE
                   Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
+                    padding: EdgeInsets.symmetric(vertical: 10),
                     child: Text(
                       _selectedYear.toString(),
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                      style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
                     ),
                   ),
                   // GRID ANUAL
@@ -1457,7 +1457,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 4,
-                        childAspectRatio: 0.65,
+                        childAspectRatio: 0.81,
                         mainAxisSpacing: 0,
                         crossAxisSpacing: 0,
                       ),
@@ -1478,12 +1478,12 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                         return Card(
                           elevation: 1,
                           child: Padding(
-                            padding: EdgeInsets.all(2),
+                            padding: EdgeInsets.all(3),
                             child: Column(
                               children: [
                                 Text(
                                   monthNames[monthIndex],
-                                  style: TextStyle(fontSize: 7, fontWeight: FontWeight.bold),
+                                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
                                 ),
                                 // Header com dias da semana
                                 Row(
@@ -1492,7 +1492,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                         child: Center(
                                           child: Text(
                                             day,
-                                            style: TextStyle(fontSize: 4, fontWeight: FontWeight.bold),
+                                            style: TextStyle(fontSize: 5, fontWeight: FontWeight.bold),
                                           ),
                                         ),
                                       ))
@@ -1546,7 +1546,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                         child: Center(
                                           child: Text(
                                             day.toString(),
-                                            style: TextStyle(fontSize: 6, fontWeight: FontWeight.bold, color: textColor),
+                                            style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: textColor),
                                           ),
                                         ),
                                       );
@@ -1569,7 +1569,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
                                                 textAlign: TextAlign.center,
-                                                style: TextStyle(fontSize: 4, height: 1.0),
+                                                style: TextStyle(fontSize: 5, height: 1.0),
                                               ),
                                           ],
                                         ),
