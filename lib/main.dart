@@ -1865,16 +1865,26 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                         final holidays = snapshot.data!;
                         if (holidays.isEmpty) return Center(child: Padding(padding: const EdgeInsets.all(40.0), child: Column(children: [Icon(Icons.event_busy, size: 48, color: Colors.grey[400]), const SizedBox(height: 16), Text('Nenhum feriado encontrado', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: fontSize))])));
 
+                        // Filtra apenas feriados do ano selecionado
+                        final holidaysCurrentYear = holidays.where((h) {
+                          try {
+                            final year = DateTime.parse(h.date).year;
+                            return year == _selectedYear;
+                          } catch (e) {
+                            return false;
+                          }
+                        }).toList();
+
                         // Deduplica feriados por data
                         final Map<String, Holiday> uniqueHolidaysMap = {};
-                        for (var holiday in holidays) {
+                        for (var holiday in holidaysCurrentYear) {
                           if (!uniqueHolidaysMap.containsKey(holiday.date)) {
                             uniqueHolidaysMap[holiday.date] = holiday;
                           }
                         }
                         final uniqueHolidays = uniqueHolidaysMap.values.toList();
 
-                        final stats = _calculateStats(holidays);
+                        final stats = _calculateStats(holidaysCurrentYear);
                         return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
