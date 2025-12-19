@@ -1415,13 +1415,13 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
         }
         
         return Transform.scale(
-          scale: 1.0,
+          scale: 1.2,
           alignment: Alignment.topCenter,
           child: Card(
             elevation: 1,
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
             child: Padding(
-              padding: EdgeInsets.all(10),
+              padding: EdgeInsets.all(12),
               child: Row(
                 children: [
                   // SETA ESQUERDA
@@ -1444,10 +1444,10 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                   ),
                   // ANO EM DESTAQUE
                   Padding(
-                    padding: EdgeInsets.symmetric(vertical: 10),
+                    padding: EdgeInsets.symmetric(vertical: 12),
                     child: Text(
                       _selectedYear.toString(),
-                      style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                      style: TextStyle(fontSize: 31, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
                     ),
                   ),
                   // GRID ANUAL
@@ -1457,7 +1457,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 4,
-                        childAspectRatio: 0.81,
+                        childAspectRatio: 1.01,
                         mainAxisSpacing: 0,
                         crossAxisSpacing: 0,
                       ),
@@ -1478,12 +1478,12 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                         return Card(
                           elevation: 1,
                           child: Padding(
-                            padding: EdgeInsets.all(3),
+                            padding: EdgeInsets.all(4),
                             child: Column(
                               children: [
                                 Text(
                                   monthNames[monthIndex],
-                                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                                 ),
                                 // Header com dias da semana
                                 Row(
@@ -1492,7 +1492,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                         child: Center(
                                           child: Text(
                                             day,
-                                            style: TextStyle(fontSize: 5, fontWeight: FontWeight.bold),
+                                            style: TextStyle(fontSize: 6, fontWeight: FontWeight.bold),
                                           ),
                                         ),
                                       ))
@@ -1515,7 +1515,8 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                       }
                                       
                                       final day = index - (firstDayOfWeek - 1) + 1;
-                                      final weekday = (index % 7) + 1;
+                                      final dateObj = DateTime(_selectedYear, month, day);
+                                      final dayOfWeek = dateObj.weekday % 7; // 0=domingo, 1=segunda, ..., 6=sábado
                                       final isToday = now.year == _selectedYear && now.month == month && now.day == day;
                                       final holidayKey = '$_selectedYear-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
                                       final isHoliday = holidayDays.contains(holidayKey);
@@ -1529,10 +1530,10 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                       } else if (isHoliday) {
                                         bgColor = Colors.green;
                                         textColor = Colors.white;
-                                      } else if (weekday == 7) { // Domingo
+                                      } else if (dayOfWeek == 0) { // Domingo
                                         bgColor = Colors.red;
                                         textColor = Colors.white;
-                                      } else if (weekday == 6) { // Sábado
+                                      } else if (dayOfWeek == 6) { // Sábado
                                         bgColor = Color(0xFFEF9A9A); // Vermelho mais claro
                                         textColor = Colors.white;
                                       }
@@ -1546,7 +1547,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                         child: Center(
                                           child: Text(
                                             day.toString(),
-                                            style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: textColor),
+                                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textColor),
                                           ),
                                         ),
                                       );
@@ -1556,9 +1557,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                 // Descrição de feriado embaixo do mês
                                 if (monthHolidays.isNotEmpty)
                                   Padding(
-                                    padding: EdgeInsets.only(top: 1),
+                                    padding: EdgeInsets.only(top: 2),
                                     child: SizedBox(
-                                      height: 12,
+                                      height: 15,
                                       child: SingleChildScrollView(
                                         child: Column(
                                           mainAxisSize: MainAxisSize.min,
@@ -1569,7 +1570,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
                                                 textAlign: TextAlign.center,
-                                                style: TextStyle(fontSize: 5, height: 1.0),
+                                                style: TextStyle(fontSize: 6, height: 1.0),
                                               ),
                                           ],
                                         ),
