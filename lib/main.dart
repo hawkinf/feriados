@@ -1548,6 +1548,31 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                         );
                                       },
                                     ),
+                                // FERIADOS DO MÊS
+                                if (holidayDays.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    alignment: Alignment.center,
+                                    child: Column(
+                                      children: [
+                                        for (int day = 1; day <= daysInMonth; day++)
+                                          ...[
+                                            if (holidayNames.containsKey('$_selectedYear-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}'))
+                                              Padding(
+                                                padding: const EdgeInsets.symmetric(vertical: 1),
+                                                child: Text(
+                                                  '$day - ${holidayNames['$_selectedYear-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}']!}',
+                                                  style: TextStyle(fontSize: 6, fontWeight: FontWeight.w500, color: Colors.grey[700]),
+                                                  textAlign: TextAlign.center,
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                          ],
+                                      ],
+                                    ),
+                                  ),
+                                ],
                                 ],
                               ),
                             ),
