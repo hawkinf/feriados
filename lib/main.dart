@@ -1499,7 +1499,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                       .toList(),
                                 ),
                                 SizedBox(
-                                  height: 230,
+                                  height: 250,
                                   child: GridView.builder(
                                     shrinkWrap: true,
                                     physics: const NeverScrollableScrollPhysics(),
