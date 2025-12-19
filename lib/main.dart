@@ -1449,6 +1449,13 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                         children: [
                           SizedBox(height: 8),
                           Center(
+                            child: Text(
+                              '$_selectedYear',
+                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          SizedBox(height: 16),
+                          Center(
                             child: GridView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
