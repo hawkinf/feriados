@@ -13,7 +13,10 @@
         "${workspaceFolder}\\.vscode\\snapshot.ps1"
       ],
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "dedicated" }
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
     }
   ]
 }
