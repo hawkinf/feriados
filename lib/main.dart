@@ -428,21 +428,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
         throw Exception('Falha ao carregar feriados nacionais.');
       }
       
-      // CARREGAR TAMBÉM FERIADOS DO PRÓXIMO ANO (para exibir em dezembro)
-      final nextYear = year + 1;
-      final uriProximo = Uri.parse('https://brasilapi.com.br/api/feriados/v1/$nextYear');
-      final responseProximo = await http.get(uriProximo);
-      if (responseProximo.statusCode == 200) {
-        List jsonList = json.decode(responseProximo.body);
-        for (var json in jsonList) {
-          final holiday = Holiday.fromJson(json);
-          // Adicionar apenas feriados de janeiro e fevereiro do próximo ano
-          final holidayDate = DateTime.parse(holiday.date);
-          if (holidayDate.month <= 2) {
-            holidaysMap[holiday.date] = holiday;
-          }
-        }
-      }
+      // NÃO carregar feriados do próximo ano - apenas mostrar o ano selecionado
       
       // Adicionar feriado bancário de último dia do ano
       final lastDay = DateTime(year, 12, 31);
@@ -461,7 +447,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
         holidaysMap[bancarioHoliday.date] = bancarioHoliday;
       }
       
-      // Adicionar feriados municipais de AMBOS os anos
+      // Adicionar feriados municipais do ano selecionado
       for (var holiday in _selectedCity.municipalHolidays) {
         final dateCurrentYear = '$year${holiday['date']}';
         final municipalHolidayCurrentYear = Holiday(date: dateCurrentYear, name: holiday['name']!, types: ['Municipal (${_selectedCity.name})']);
@@ -469,14 +455,6 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
           holidaysMap[dateCurrentYear] = holidaysMap[dateCurrentYear]!.mergeWith(municipalHolidayCurrentYear);
         } else {
           holidaysMap[dateCurrentYear] = municipalHolidayCurrentYear;
-        }
-        
-        final dateNextYear = '$nextYear${holiday['date']}';
-        final municipalHolidayNextYear = Holiday(date: dateNextYear, name: holiday['name']!, types: ['Municipal (${_selectedCity.name})']);
-        if (holidaysMap.containsKey(dateNextYear)) {
-          holidaysMap[dateNextYear] = holidaysMap[dateNextYear]!.mergeWith(municipalHolidayNextYear);
-        } else {
-          holidaysMap[dateNextYear] = municipalHolidayNextYear;
         }
       }
       
