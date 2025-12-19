@@ -446,7 +446,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
       } else {
         specialNote = 'Bancos encerram às 11h';
       }
-      final bancarioHoliday = Holiday(date: '$year-12-31', name: 'Último Dia Útil do Ano', types: ['Bancário'], specialNote: specialNote);
+      final bancarioHoliday = Holiday(date: '$year-12-31', name: 'Véspera de Ano Novo', types: ['Bancário'], specialNote: specialNote);
       if (holidaysMap.containsKey(bancarioHoliday.date)) {
         holidaysMap[bancarioHoliday.date] = holidaysMap[bancarioHoliday.date]!.mergeWith(bancarioHoliday);
       } else {
@@ -1152,6 +1152,29 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
       builder: (context, snapshot) {
         Map<String, String> holidayNames = {};
         Set<String> holidayDays = {};
+        
+        // Mostrar loading enquanto carrega
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Transform.scale(
+            scale: 0.92,
+            alignment: Alignment.topCenter,
+            child: Card(
+              elevation: 1,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              child: Padding(
+                padding: EdgeInsets.all(40),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
+                    SizedBox(height: 16),
+                    Text('Carregando feriados...', style: TextStyle(fontSize: 14)),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
         
         if (snapshot.hasData) {
           debugPrint('=== SEMANAL DEBUG ===');
