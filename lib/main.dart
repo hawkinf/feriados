@@ -1447,48 +1447,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                     child: SingleChildScrollView(
                       child: Column(
                         children: [
-                          SizedBox(height: 16),
-                          // PRÓXIMO FERIADO
-                          FutureBuilder<({String name, int daysUntil})?>(
-                            future: _getNextHoliday(),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState == ConnectionState.waiting) {
-                                return const SizedBox(height: 40, child: Center(child: CircularProgressIndicator()));
-                              }
-                              if (snapshot.hasData && snapshot.data != null) {
-                                final nextHoliday = snapshot.data!;
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1.5),
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        'Próximo Feriado',
-                                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.primary),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '${nextHoliday.daysUntil} dias',
-                                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        nextHoliday.name,
-                                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.grey[700]),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }
-                              return const SizedBox.shrink();
-                            },
-                          ),
-                          SizedBox(height: 16),
+                          SizedBox(height: 8),
                           Center(
                             child: GridView.builder(
                               shrinkWrap: true,
