@@ -1055,7 +1055,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                 fontSize: headerFontSize * 0.8,
                                 fontWeight: FontWeight.bold,
                                 color: day == 'DOM' || day == 'SAB' ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                                backgroundColor: day == 'DOM' || day == 'SAB' ? Color(0xFFEF9A9A) : Colors.transparent, // Vermelho mais claro
+                                backgroundColor: day == 'DOM' ? Colors.red : (day == 'SAB' ? Color(0xFFEF9A9A) : Colors.transparent), // DOM vermelho escuro, SAB vermelho claro
                               ),
                             ),
                           ),
@@ -1082,7 +1082,6 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                           final dateObj = DateTime(year, month, day);
                           final weekday = dateObj.weekday; // 1=segunda, 7=domingo
                           final dayOfWeek = weekday % 7; // 0=domingo, 1=segunda, ..., 6=sábado
-                          final isWeekend = dayOfWeek == 0 || dayOfWeek == 6; // domingo ou sábado
                           final isToday = isCurrentMonth && day == todayDay;
                           final holidayKey = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
                           final isHoliday = holidayDays.contains(holidayKey);
@@ -1103,7 +1102,10 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                             bgColor = Colors.lightGreen[300] ?? Colors.lightGreen;
                             textColor = Colors.grey[700] ?? Colors.grey;
                             opacity = 1.0;
-                          } else if (isWeekend) {
+                          } else if (dayOfWeek == 0) { // Domingo
+                            bgColor = Colors.red;
+                            textColor = Colors.white;
+                          } else if (dayOfWeek == 6) { // Sábado
                             bgColor = Color(0xFFEF9A9A); // Vermelho mais claro
                             textColor = Colors.white;
                           } else if (!isCurrentMonth) {
@@ -1293,7 +1295,6 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                           children: weekDays.map((day) {
                             final now = DateTime.now();
                             final isToday = day.date.year == now.year && day.date.month == now.month && day.date.day == now.day;
-                            final isWeekend = day.label == 'DOM' || day.label == 'SAB';
                             final holidayKey = '${day.date.year}-${day.date.month.toString().padLeft(2, '0')}-${day.date.day.toString().padLeft(2, '0')}';
                             final isHoliday = holidayDays.contains(holidayKey);
                             final holidayName = isHoliday ? holidayNames[holidayKey] : null;
@@ -1307,7 +1308,10 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                             } else if (isHoliday) {
                               bgColor = Colors.green;
                               textColor = Colors.white;
-                            } else if (isWeekend) {
+                            } else if (day.label == 'DOM') { // Domingo
+                              bgColor = Colors.red;
+                              textColor = Colors.white;
+                            } else if (day.label == 'SAB') { // Sábado
                               bgColor = Color(0xFFEF9A9A); // Vermelho mais claro
                               textColor = Colors.white;
                             }
@@ -1483,7 +1487,6 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                       
                                       final day = index - (firstDayOfWeek - 1) + 1;
                                       final weekday = (index % 7) + 1;
-                                      final isWeekend = weekday == 1 || weekday == 7;
                                       final isToday = now.year == _selectedYear && now.month == month && now.day == day;
                                       final holidayKey = '$_selectedYear-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
                                       final isHoliday = holidayDays.contains(holidayKey);
@@ -1498,7 +1501,10 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                       } else if (isHoliday) {
                                         bgColor = Colors.green;
                                         textColor = Colors.white;
-                                      } else if (isWeekend) {
+                                      } else if (weekday == 7) { // Domingo
+                                        bgColor = Colors.red;
+                                        textColor = Colors.white;
+                                      } else if (weekday == 6) { // Sábado
                                         bgColor = Color(0xFFEF9A9A); // Vermelho mais claro
                                         textColor = Colors.white;
                                       }
