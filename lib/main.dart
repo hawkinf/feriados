@@ -6,16 +6,12 @@ import 'dart:async';
 import 'package:intl/intl.dart'; 
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
-import 'package:fl_chart/fl_chart.dart';
 
 
 // Versão do App
-const String APP_VERSION = '2.8.0';
-const String APP_BUILD = '22';
-const String API_SOURCE = 'BrasilAPI - https://brasilapi.com.br/api/feriados/v1/';
+const String appVersion = '2.8.0';
+const String appBuild = '22';
+const String apiSource = 'BrasilAPI - https://brasilapi.com.br/api/feriados/v1/';
 
 // === INICIALIZAÇÃO E LOCALE ===
 void main() async {
@@ -228,22 +224,14 @@ class HolidayScreen extends StatefulWidget {
 
 class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProviderStateMixin {
   int _selectedYear = DateTime.now().year;
+  int _calendarMonth = DateTime.now().month;
   late CityData _selectedCity;
-  String? _selectedRegion; 
   late Future<List<Holiday>> _holidaysFuture;
   late AnimationController _animationController;
   bool _isLoading = true;
   bool _isDarkMode = false;
   
   final List<int> availableYears = List.generate(11, (index) => DateTime.now().year - 5 + index);
-  
-  final List<String> regions = [
-    'SP e Grande SP',
-    'Vale do Paraíba',
-    'Litoral Norte',
-    'Litoral Sul',
-    'Sul de Minas',
-  ];
 
   late final List<CityData> cities;
   
@@ -369,7 +357,6 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     cities.sort((a, b) => a.name.compareTo(b.name));
     
     _selectedCity = cities.firstWhere((city) => city.name == 'São José dos Campos', orElse: () => cities.first);
-    _selectedRegion = _selectedCity.region; 
   }
   
   @override
@@ -386,7 +373,6 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
         final cityIndex = cities.indexWhere((city) => city.name == savedCityName);
         if (cityIndex != -1) {
           _selectedCity = cities[cityIndex];
-          _selectedRegion = _selectedCity.region;
         }
       }
       final savedYear = prefs.getInt('selectedYear');
@@ -415,10 +401,11 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
   }
 
   Future<List<Holiday>> _fetchHolidays(int year) async {
-    final uriNacional = Uri.parse('https://brasilapi.com.br/api/feriados/v1/$year');
     Map<String, Holiday> holidaysMap = {};
     
     try {
+      // Carregar feriados do ano atual
+      final uriNacional = Uri.parse('https://brasilapi.com.br/api/feriados/v1/$year');
       final response = await http.get(uriNacional);
       if (response.statusCode == 200) {
         List jsonList = json.decode(response.body);
@@ -426,36 +413,65 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
           final holiday = Holiday.fromJson(json);
           holidaysMap[holiday.date] = holiday;
         }
-        final lastDay = DateTime(year, 12, 31);
-        String specialNote = '';
-        if (lastDay.weekday == DateTime.saturday) {
-          specialNote = 'Bancos encerram às 11h na sexta-feira anterior (30/12)';
-        } else if (lastDay.weekday == DateTime.sunday) {
-          specialNote = 'Bancos encerram às 11h na sexta-feira anterior (29/12)';
-        } else {
-          specialNote = 'Bancos encerram às 11h';
-        }
-        final bancarioHoliday = Holiday(date: '$year-12-31', name: 'Último Dia Útil do Ano', types: ['Bancário'], specialNote: specialNote);
-        if (holidaysMap.containsKey(bancarioHoliday.date)) {
-          holidaysMap[bancarioHoliday.date] = holidaysMap[bancarioHoliday.date]!.mergeWith(bancarioHoliday);
-        } else {
-          holidaysMap[bancarioHoliday.date] = bancarioHoliday;
-        }
-        for (var holiday in _selectedCity.municipalHolidays) {
-          final date = '$year${holiday['date']}';
-          final municipalHoliday = Holiday(date: date, name: holiday['name']!, types: ['Municipal (${_selectedCity.name})']);
-          if (holidaysMap.containsKey(date)) {
-            holidaysMap[date] = holidaysMap[date]!.mergeWith(municipalHoliday);
-          } else {
-            holidaysMap[date] = municipalHoliday;
-          }
-        }
-        final allHolidays = holidaysMap.values.toList();
-        allHolidays.sort((a, b) => a.date.compareTo(b.date));
-        return allHolidays;
       } else {
         throw Exception('Falha ao carregar feriados nacionais.');
       }
+      
+      // CARREGAR TAMBÉM FERIADOS DO PRÓXIMO ANO (para exibir em dezembro)
+      final nextYear = year + 1;
+      final uriProximo = Uri.parse('https://brasilapi.com.br/api/feriados/v1/$nextYear');
+      final responseProximo = await http.get(uriProximo);
+      if (responseProximo.statusCode == 200) {
+        List jsonList = json.decode(responseProximo.body);
+        for (var json in jsonList) {
+          final holiday = Holiday.fromJson(json);
+          // Adicionar apenas feriados de janeiro e fevereiro do próximo ano
+          final holidayDate = DateTime.parse(holiday.date);
+          if (holidayDate.month <= 2) {
+            holidaysMap[holiday.date] = holiday;
+          }
+        }
+      }
+      
+      // Adicionar feriado bancário de último dia do ano
+      final lastDay = DateTime(year, 12, 31);
+      String specialNote = '';
+      if (lastDay.weekday == DateTime.saturday) {
+        specialNote = 'Bancos encerram às 11h na sexta-feira anterior (30/12)';
+      } else if (lastDay.weekday == DateTime.sunday) {
+        specialNote = 'Bancos encerram às 11h na sexta-feira anterior (29/12)';
+      } else {
+        specialNote = 'Bancos encerram às 11h';
+      }
+      final bancarioHoliday = Holiday(date: '$year-12-31', name: 'Último Dia Útil do Ano', types: ['Bancário'], specialNote: specialNote);
+      if (holidaysMap.containsKey(bancarioHoliday.date)) {
+        holidaysMap[bancarioHoliday.date] = holidaysMap[bancarioHoliday.date]!.mergeWith(bancarioHoliday);
+      } else {
+        holidaysMap[bancarioHoliday.date] = bancarioHoliday;
+      }
+      
+      // Adicionar feriados municipais de AMBOS os anos
+      for (var holiday in _selectedCity.municipalHolidays) {
+        final dateCurrentYear = '$year${holiday['date']}';
+        final municipalHolidayCurrentYear = Holiday(date: dateCurrentYear, name: holiday['name']!, types: ['Municipal (${_selectedCity.name})']);
+        if (holidaysMap.containsKey(dateCurrentYear)) {
+          holidaysMap[dateCurrentYear] = holidaysMap[dateCurrentYear]!.mergeWith(municipalHolidayCurrentYear);
+        } else {
+          holidaysMap[dateCurrentYear] = municipalHolidayCurrentYear;
+        }
+        
+        final dateNextYear = '$nextYear${holiday['date']}';
+        final municipalHolidayNextYear = Holiday(date: dateNextYear, name: holiday['name']!, types: ['Municipal (${_selectedCity.name})']);
+        if (holidaysMap.containsKey(dateNextYear)) {
+          holidaysMap[dateNextYear] = holidaysMap[dateNextYear]!.mergeWith(municipalHolidayNextYear);
+        } else {
+          holidaysMap[dateNextYear] = municipalHolidayNextYear;
+        }
+      }
+      
+      final allHolidays = holidaysMap.values.toList();
+      allHolidays.sort((a, b) => a.date.compareTo(b.date));
+      return allHolidays;
     } catch (e) {
       throw Exception('Erro de conexão ou dados: $e');
     }
@@ -520,7 +536,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                 const SizedBox(height: 8),
                 
                 Text(
-                  'Versão $APP_VERSION (Build $APP_BUILD)',
+                  'Versão $appVersion (Build $appBuild)',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Colors.grey[600],
                   ),
@@ -531,7 +547,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                    color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -562,13 +578,73 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                 
                 const SizedBox(height: 16),
                 
+                // === PREFERÊNCIAS (REGIÃO E CIDADE) ===
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.4),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Preferências',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.outline,
+                                  width: 2,
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: DropdownButton<CityData>(
+                                value: _selectedCity,
+                                isExpanded: true,
+                                underline: const SizedBox(),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+                                items: cities.where((city) => city.region == 'Vale do Paraíba').map((city) => DropdownMenuItem<CityData>(value: city, child: Text(city.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface), overflow: TextOverflow.ellipsis))).toList(),
+                                onChanged: (newCity) {
+                                  if (newCity != null) {
+                                    setState(() {
+                                      _selectedCity = newCity;
+                                      _savePreferences();
+                                      _reloadData();
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+                
                 // BOTÃO DE MODO ESCURO (MOVIDO PARA CÁ)
                 Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
+                      color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
@@ -605,7 +681,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.3),
+                    color: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -632,7 +708,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        API_SOURCE,
+                        apiSource,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Colors.grey[600],
                         ),
@@ -683,7 +759,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
           case DateTime.friday: stats.sextas++; stats.diasUteis++; break;
           case DateTime.saturday: case DateTime.sunday: stats.finaisSemana++; break;
         }
-      } catch (e) {}
+      } catch (e) {
+        // Tratamento de erro na análise de feriado
+      }
     }
     return stats;
   }
@@ -716,10 +794,10 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
              Text('Por Tipo', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             // Uso de cores dinâmicas para fundo (claro em Light, transparente em Dark) e texto (preto em Light, branco em Dark)
-            _buildStatRow(context, 'Nacionais', stats.nacionais, isDark ? Colors.white : Colors.black87, backgroundColor: isDark ? Colors.blue.withOpacity(0.2) : Colors.blue[50]),
-            _buildStatRow(context, 'Municipais', stats.municipais, isDark ? Colors.white : Colors.black87, backgroundColor: isDark ? Colors.orange.withOpacity(0.2) : Colors.orange[50]),
-            _buildStatRow(context, 'Bancários', stats.bancarios, isDark ? Colors.white : Colors.black87, backgroundColor: isDark ? Colors.green.withOpacity(0.2) : Colors.green[50]),
-            _buildStatRow(context, 'Estaduais', stats.estaduais, isDark ? Colors.white : Colors.black87, backgroundColor: isDark ? Colors.purple.withOpacity(0.2) : Colors.purple[50]),
+            _buildStatRow(context, 'Nacionais', stats.nacionais, isDark ? Colors.white : Colors.black87, backgroundColor: isDark ? Colors.blue.withValues(alpha: 0.2) : Colors.blue[50]),
+            _buildStatRow(context, 'Municipais', stats.municipais, isDark ? Colors.white : Colors.black87, backgroundColor: isDark ? Colors.orange.withValues(alpha: 0.2) : Colors.orange[50]),
+            _buildStatRow(context, 'Bancários', stats.bancarios, isDark ? Colors.white : Colors.black87, backgroundColor: isDark ? Colors.green.withValues(alpha: 0.2) : Colors.green[50]),
+            _buildStatRow(context, 'Estaduais', stats.estaduais, isDark ? Colors.white : Colors.black87, backgroundColor: isDark ? Colors.purple.withValues(alpha: 0.2) : Colors.purple[50]),
           ],
         ),
       ),
@@ -729,12 +807,12 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
   Widget _buildStatBadge(String label, int value, Color color, double fontSize) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withOpacity(0.3))),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withValues(alpha: 0.3))),
       child: Column(
         children: [
           Text(value.toString(), style: TextStyle(fontSize: fontSize + 10, fontWeight: FontWeight.bold, color: color)),
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: fontSize - 2, color: color.withOpacity(0.8), fontWeight: FontWeight.w500), textAlign: TextAlign.center),
+          Text(label, style: TextStyle(fontSize: fontSize - 2, color: color.withValues(alpha: 0.8), fontWeight: FontWeight.w500), textAlign: TextAlign.center),
         ],
       ),
     );
@@ -767,162 +845,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     );
   }
 
-  // --- POPUP: RESUMO COMPLETO ---
-  void _showSummary() async {
-    final holidays = await _holidaysFuture;
-    final stats = _calculateStats(holidays);
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (context) {
-        final size = MediaQuery.of(context).size;
-        final bool isDark = Theme.of(context).brightness == Brightness.dark;
-
-        return Dialog(
-          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          child: Container(
-            constraints: BoxConstraints(maxWidth: 500, maxHeight: size.height * 0.9),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.primaryContainer, borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24))),
-                  child: Row(
-                    children: [
-                      Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.analytics_rounded, color: Colors.white, size: 28)),
-                      const SizedBox(width: 16),
-                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('RESUMO', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-                        Text('Análise de Feriados', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700])),
-                      ])),
-                      IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close), style: IconButton.styleFrom(backgroundColor: Colors.white.withOpacity(0.5))),
-                    ],
-                  ),
-                ),
-                
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSummaryCard(context, icon: Icons.calendar_today, label: 'Ano', value: _selectedYear.toString(), color: Colors.blue),
-                        const SizedBox(height: 8),
-                        _buildSummaryCard(context, icon: Icons.location_city, label: 'Cidade', value: _selectedCity.name, color: Colors.orange),
-                        
-                        const Divider(height: 32),
-
-                        Text('Por Tipo', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 12),
-                        // Uso de cores dinâmicas no popup
-                        _buildStatRow(context, 'Feriados Bancários', stats.bancarios, isDark ? Colors.white : Colors.black87, backgroundColor: isDark ? Colors.green.withOpacity(0.2) : Colors.green[50]),
-                        _buildStatRow(context, 'Feriados Nacionais', stats.nacionais, isDark ? Colors.white : Colors.black87, backgroundColor: isDark ? Colors.blue.withOpacity(0.2) : Colors.blue[50]),
-                        _buildStatRow(context, 'Feriados Estaduais', stats.estaduais, isDark ? Colors.white : Colors.black87, backgroundColor: isDark ? Colors.purple.withOpacity(0.2) : Colors.purple[50]),
-                        _buildStatRow(context, 'Feriados Municipais', stats.municipais, isDark ? Colors.white : Colors.black87, backgroundColor: isDark ? Colors.orange.withOpacity(0.2) : Colors.orange[50]),
-                        
-                        const Divider(height: 32),
-                        
-                        Text('Por Mês', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 12),
-                        ...(() {
-                           final entries = stats.monthlyStats.entries.toList();
-                           entries.sort((a, b) => a.key.compareTo(b.key));
-                           return entries.asMap().entries.map((mapEntry) {
-                             int idx = mapEntry.key;
-                             var entry = mapEntry.value;
-                             // Zebra Dinâmica
-                             Color bg = idx.isEven 
-                                 ? (isDark ? Colors.white.withOpacity(0.05) : Colors.grey[200]!) 
-                                 : Colors.transparent;
-                             return Padding(
-                               padding: const EdgeInsets.symmetric(vertical: 2),
-                               child: _buildStatRow(context, entry.value.monthName, entry.value.totalDays, isDark ? Colors.white : Colors.black87, backgroundColor: bg),
-                             );
-                           });
-                        })(),
-
-                        const Divider(height: 32),
-                        
-                        Text('Por Dia da Semana', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 12),
-                        ...[
-                          {'label': 'Segundas-Feiras', 'val': stats.segundas},
-                          {'label': 'Terças-Feiras', 'val': stats.tercas},
-                          {'label': 'Quartas-Feiras', 'val': stats.quartas},
-                          {'label': 'Quintas-Feiras', 'val': stats.quintas},
-                          {'label': 'Sextas-Feiras', 'val': stats.sextas},
-                        ].asMap().entries.map((entry) {
-                           int idx = entry.key;
-                           var data = entry.value;
-                           // Zebra Dinâmica
-                           Color bg = idx.isEven 
-                               ? (isDark ? Colors.white.withOpacity(0.05) : Colors.grey[200]!) 
-                               : Colors.transparent;
-                           return _buildStatRow(context, data['label'] as String, data['val'] as int, isDark ? Colors.white : Colors.black87, backgroundColor: bg);
-                        }).toList(),
-                        
-                        const Divider(height: 24),
-                        
-                        _buildStatRow(context, 'Total de Feriados Dias Úteis', stats.diasUteis, isDark ? Colors.white : Colors.black87, backgroundColor: isDark ? Colors.indigo.withOpacity(0.2) : Colors.indigo[50]),
-                        _buildStatRow(context, 'Finais de Semana', stats.finaisSemana, isDark ? Colors.white : Colors.black87, backgroundColor: isDark ? Colors.red.withOpacity(0.2) : Colors.red[50]),
-                        
-                        const Divider(height: 32),
-                        
-                        Text('Histórico (Dias Úteis)', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 12),
-                        FutureBuilder<List<YearlyData>>(
-                          future: _fetchYearlyData(_selectedYear),
-                          builder: (context, snapshot) {
-                            if (snapshot.hasData) return _buildYearlyChart(snapshot.data!, _selectedYear);
-                            return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
-                          },
-                        ),
-                        
-                        const SizedBox(height: 24),
-                        
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
-                              Navigator.pop(context);
-                              await _exportToPdf(holidays, stats);
-                            },
-                            icon: const Icon(Icons.picture_as_pdf),
-                            label: const Text('EXPORTAR PDF'),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                
-                Container(padding: const EdgeInsets.all(24), child: SizedBox(width: double.infinity, child: ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text('FECHAR')))),
-              ],
-            ),
-          ),
-        );
-      }
-    );
-  }
-
-  Widget _buildSummaryCard(BuildContext context, {required IconData icon, required String label, required String value, required Color color}) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withOpacity(0.3), width: 1)),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(width: 12),
-          Expanded(child: Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]))),
-          Flexible(child: Text(value, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: color), overflow: TextOverflow.ellipsis)),
-        ],
-      ),
-    );
-  }
-
+  // --- MÉTODOS AUXILIARES ---
   String _formatDate(String dateString) {
     final date = DateTime.tryParse(dateString);
     if (date == null) return 'Data inválida';
@@ -936,12 +859,280 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     }
   }
 
+  Widget _buildCalendarGrid() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 800;
+    final double fontSize = isMobile ? 16.0 : 18.0;
+    final double headerFontSize = isMobile ? 18.0 : 20.0;
+    final double titleFontSize = (fontSize - 1) * 2.2;
+    
+    final now = DateTime(_selectedYear, _calendarMonth, 1);
+    final firstDayOfWeek = now.weekday == 7 ? 1 : now.weekday + 1;
+    final daysInMonth = DateTime(_selectedYear, _calendarMonth + 1, 0).day;
+    final prevMonthDays = DateTime(_selectedYear, _calendarMonth, 0).day;
+    
+    // Calcular mês anterior
+    int prevMonth = _calendarMonth == 1 ? 12 : _calendarMonth - 1;
+    int prevYear = _calendarMonth == 1 ? _selectedYear - 1 : _selectedYear;
+    
+    // Calcular próximo mês/ano
+    int nextMonth = _calendarMonth == 12 ? 1 : _calendarMonth + 1;
+    int nextYear = _calendarMonth == 12 ? _selectedYear + 1 : _selectedYear;
+    
+    final monthName = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'][_calendarMonth - 1];
+    
+    final today = DateTime.now();
+    final isCurrentMonth = today.year == _selectedYear && today.month == _calendarMonth;
+    final todayDay = isCurrentMonth ? today.day : -1;
+    
+    final List<String> dayHeaders = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
+    List<({int day, int month, int year, bool isCurrentMonth})> calendarDays = [];
+    
+    // Dias do mês anterior
+    for (int i = prevMonthDays - firstDayOfWeek + 2; i <= prevMonthDays; i++) {
+      calendarDays.add((day: i, month: prevMonth, year: prevYear, isCurrentMonth: false));
+    }
+    
+    // Dias do mês atual
+    for (int i = 1; i <= daysInMonth; i++) {
+      calendarDays.add((day: i, month: _calendarMonth, year: _selectedYear, isCurrentMonth: true));
+    }
+    
+    // Dias do próximo mês para completar o grid
+    int remainingCells = (7 - (calendarDays.length % 7)) % 7;
+    for (int i = 1; i <= remainingCells; i++) {
+      calendarDays.add((day: i, month: nextMonth, year: nextYear, isCurrentMonth: false));
+    }
+    
+    return FutureBuilder<List<Holiday>>(
+      future: _holidaysFuture,
+      builder: (context, snapshot) {
+        Map<String, String> holidayNames = {};
+        Set<String> holidayDays = {};
+        
+        debugPrint('=== Calendário Debug ===');
+        debugPrint('Mês selecionado: $_calendarMonth, Ano: $_selectedYear');
+        debugPrint('Mês anterior: $prevMonth/$prevYear');
+        debugPrint('Próximo mês: $nextMonth/$nextYear');
+        debugPrint('Dados do snapshot: ${snapshot.hasData}');
+        
+        if (snapshot.hasData) {
+          debugPrint('Total de feriados carregados: ${snapshot.data!.length}');
+          for (final holiday in snapshot.data!) {
+            try {
+              final holidayDate = DateTime.parse(holiday.date);
+              final key = '${holidayDate.year}-${holidayDate.month.toString().padLeft(2, '0')}-${holidayDate.day.toString().padLeft(2, '0')}';
+              debugPrint('Processando feriado: ${holiday.name} em ${holiday.date} (key: $key)');
+              
+              // Verificar se é do mês atual, anterior ou próximo
+              if ((holidayDate.month == _calendarMonth && holidayDate.year == _selectedYear) ||
+                  (holidayDate.month == prevMonth && holidayDate.year == prevYear) ||
+                  (holidayDate.month == nextMonth && holidayDate.year == nextYear)) {
+                debugPrint('✓ Feriado ADICIONADO: ${holiday.name}');
+                holidayDays.add(key);
+                holidayNames[key] = holiday.name;
+              } else {
+                debugPrint('✗ Feriado IGNORADO: ${holiday.name}');
+              }
+            } catch (e) {
+              debugPrint('Erro ao parsear feriado: ${holiday.date} - $e');
+            }
+          }
+          debugPrint('Total de feriados para este mês: ${holidayDays.length}');
+        } else if (snapshot.hasError) {
+          debugPrint('ERRO ao carregar feriados: ${snapshot.error}');
+        } else {
+          debugPrint('Carregando feriados...');
+        }
+        
+        return Card(
+          elevation: 1,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          child: Padding(
+            padding: EdgeInsets.all(isMobile ? 0.15 : 0.2),
+            child: Row(
+              children: [
+                // SETA ESQUERDA - RETROCEDEM MÊS
+                SizedBox(
+                  width: 50,
+                  child: Center(
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      iconSize: isMobile ? 40 : 45,
+                      icon: Icon(Icons.arrow_circle_left_rounded),
+                      color: Theme.of(context).colorScheme.primary,
+                      onPressed: () {
+                        setState(() {
+                          if (_calendarMonth == 1) {
+                            _calendarMonth = 12;
+                            _selectedYear--;
+                          } else {
+                            _calendarMonth--;
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                ),
+                // CALENDÁRIO NO MEIO
+                Expanded(
+                  child: Column(
+                    children: [
+                      // TÍTULO DO MÊS/ANO
+                      Center(
+                        child: Text(
+                          '$monthName / $_selectedYear',
+                          style: TextStyle(fontSize: titleFontSize * 0.9, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(height: 0.5),
+                      // HEADERS (DOM, SEG, TER, etc)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: dayHeaders.map((day) => Expanded(
+                          child: Center(
+                            child: Text(
+                              day,
+                              style: TextStyle(
+                                fontSize: headerFontSize * 0.8,
+                                fontWeight: FontWeight.bold,
+                                color: day == 'DOM' || day == 'SAB' ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                                backgroundColor: day == 'DOM' || day == 'SAB' ? Colors.red : Colors.transparent,
+                              ),
+                            ),
+                          ),
+                        )).toList(),
+                      ),
+                      const SizedBox(height: 0.3),
+                      // GRID DO CALENDÁRIO
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 7,
+                          childAspectRatio: 1.0,
+                          mainAxisSpacing: 0.01,
+                          crossAxisSpacing: 0.01,
+                        ),
+                        itemCount: calendarDays.length,
+                        itemBuilder: (context, index) {
+                          final dayData = calendarDays[index];
+                          final day = dayData.day;
+                          final month = dayData.month;
+                          final year = dayData.year;
+                          final isCurrentMonth = dayData.isCurrentMonth;
+                          final weekday = (index % 7) + 1;
+                          final isWeekend = weekday == 1 || weekday == 7;
+                          final isToday = isCurrentMonth && day == todayDay;
+                          final holidayKey = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+                          final isHoliday = holidayDays.contains(holidayKey);
+                          final holidayName = isHoliday ? holidayNames[holidayKey] : null;
+                          
+                          Color bgColor = Colors.white;
+                          Color textColor = Theme.of(context).colorScheme.onSurface;
+                          double opacity = 1.0;
+                          
+                          if (isToday) {
+                            bgColor = Colors.blue;
+                            textColor = Colors.white;
+                          } else if (isHoliday && isCurrentMonth) {
+                            bgColor = Colors.green;
+                            textColor = Colors.white;
+                            opacity = 1.0;
+                          } else if (isHoliday && !isCurrentMonth) {
+                            bgColor = Colors.lightGreen[300] ?? Colors.lightGreen;
+                            textColor = Colors.grey[700] ?? Colors.grey;
+                            opacity = 1.0;
+                          } else if (isWeekend) {
+                            bgColor = Colors.red;
+                            textColor = Colors.white;
+                          } else if (!isCurrentMonth) {
+                            bgColor = Colors.grey[600] ?? Colors.grey;
+                            opacity = 0.6;
+                            textColor = Colors.white;
+                          }
+                          
+                          return Tooltip(
+                            message: holidayName ?? '',
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: bgColor.withValues(alpha: opacity),
+                                border: Border.all(
+                                  color: Colors.black,
+                                  width: 1.5,
+                                ),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    day.toString(),
+                                    style: TextStyle(fontSize: fontSize + 2, fontWeight: FontWeight.w700, color: textColor),
+                                  ),
+                                  if (isToday)
+                                    Text(
+                                      'HOJE',
+                                      style: TextStyle(fontSize: (fontSize - 2) * 0.7, fontWeight: FontWeight.w600, color: textColor),
+                                    ),
+                                  if (isHoliday && holidayName != null)
+                                    Flexible(
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(top: 0.1),
+                                        child: Text(
+                                          holidayName,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(fontSize: (fontSize - 2) * 0.75, fontWeight: FontWeight.w600, color: textColor),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                // SETA DIREITA - AVANÇA MÊS
+                SizedBox(
+                  width: 50,
+                  child: Center(
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      iconSize: isMobile ? 40 : 45,
+                      icon: Icon(Icons.arrow_circle_right_rounded),
+                      color: Theme.of(context).colorScheme.primary,
+                      onPressed: () {
+                        setState(() {
+                          if (_calendarMonth == 12) {
+                            _calendarMonth = 1;
+                            _selectedYear++;
+                          } else {
+                            _calendarMonth++;
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 800;
     final double fontSize = isMobile ? 18.0 : 16.0;
-    final double buttonPadding = isMobile ? 20.0 : 16.0;
     final double cardPadding = isMobile ? 20.0 : 16.0;
 
     if (_isLoading) {
@@ -953,7 +1144,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
       body: CustomScrollView(
         slivers: [
           SliverAppBar.large(
-            expandedHeight: isMobile ? 120 : 160,
+            expandedHeight: isMobile ? 40 : 53,
             pinned: true,
             actions: [
               Padding(
@@ -966,7 +1157,28 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                 ),
               ),
             ],
-            flexibleSpace: FlexibleSpaceBar(title: Text('Feriados', style: TextStyle(fontWeight: FontWeight.bold, fontSize: isMobile ? 22 : 20)), background: Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.primary.withOpacity(0.7)])))),
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(
+                'CalendarPRO - ${_selectedCity.name} $_selectedYear',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: Colors.white,
+                ),
+              ),
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Theme.of(context).colorScheme.primary,
+                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -974,64 +1186,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Card(
-                    elevation: 2,
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    child: Padding(
-                      padding: EdgeInsets.all(cardPadding),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          DropdownButtonFormField<int>(
-                            decoration: InputDecoration(labelText: 'Ano', labelStyle: TextStyle(fontSize: fontSize), prefixIcon: Icon(Icons.calendar_month, size: isMobile ? 28 : 24), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Theme.of(context).colorScheme.surface),
-                            value: _selectedYear,
-                            style: TextStyle(fontSize: fontSize + 2, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
-                            items: availableYears.map((year) => DropdownMenuItem<int>(value: year, child: Text(year.toString(), style: TextStyle(fontSize: fontSize + 2, fontWeight: FontWeight.w600)))).toList(),
-                            onChanged: (newYear) { if (newYear != null) { setState(() { _selectedYear = newYear; }); _reloadData(); } },
-                          ),
-                          SizedBox(height: isMobile ? 20 : 16),
-                          
-                          DropdownButtonFormField<String>(
-                            decoration: InputDecoration(labelText: 'Região', labelStyle: TextStyle(fontSize: fontSize), prefixIcon: Icon(Icons.map, size: isMobile ? 28 : 24), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Theme.of(context).colorScheme.surface),
-                            value: _selectedRegion,
-                            isExpanded: true,
-                            style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface),
-                            items: regions.map((region) => DropdownMenuItem<String>(value: region, child: Text(region, style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w500)))).toList(),
-                            onChanged: (newRegion) {
-                              if (newRegion != null) {
-                                setState(() {
-                                  _selectedRegion = newRegion;
-                                  final citiesInRegion = cities.where((c) => c.region == newRegion).toList();
-                                  if (citiesInRegion.isNotEmpty) {
-                                    _selectedCity = citiesInRegion.first;
-                                  }
-                                  _savePreferences();
-                                  _reloadData();
-                                });
-                              }
-                            },
-                          ),
-                          SizedBox(height: isMobile ? 20 : 16),
-
-                          DropdownButtonFormField<CityData>(
-                            decoration: InputDecoration(labelText: 'Cidade', labelStyle: TextStyle(fontSize: fontSize), prefixIcon: Icon(Icons.location_on, size: isMobile ? 28 : 24), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Theme.of(context).colorScheme.surface),
-                            value: _selectedCity,
-                            isExpanded: true,
-                            style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface),
-                            items: cities.where((city) => city.region == _selectedRegion).map((city) => DropdownMenuItem<CityData>(value: city, child: Text(city.name, style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis))).toList(),
-                            onChanged: (newCity) { if (newCity != null) { setState(() { _selectedCity = newCity; }); _savePreferences(); _reloadData(); } },
-                          ),
-                          SizedBox(height: isMobile ? 24 : 20),
-                          ElevatedButton.icon(
-                            onPressed: _showSummary,
-                            icon: Icon(Icons.analytics_rounded, size: isMobile ? 26 : 22),
-                            label: Text('RESUMO COMPLETO', style: TextStyle(fontSize: fontSize + 2, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-                            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.secondary, foregroundColor: Theme.of(context).colorScheme.onSecondary, padding: EdgeInsets.symmetric(vertical: buttonPadding)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  _buildCalendarGrid(),
                   SizedBox(height: isMobile ? 28 : 24),
                   FutureBuilder<List<Holiday>>(
                     future: _holidaysFuture,
@@ -1058,7 +1213,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                   final holiday = holidays[index];
                                   final formattedDate = _formatDate(holiday.date);
                                   bool isWeekend = false;
-                                  try { isWeekend = (DateFormat('yyyy-MM-dd').parse(holiday.date).weekday == DateTime.saturday || DateFormat('yyyy-MM-dd').parse(holiday.date).weekday == DateTime.sunday); } catch (e) {}
+                                  try { isWeekend = (DateFormat('yyyy-MM-dd').parse(holiday.date).weekday == DateTime.saturday || DateFormat('yyyy-MM-dd').parse(holiday.date).weekday == DateTime.sunday); } catch (e) {
+                                    // Ignorar erro na análise de fim de semana
+                                  }
                                   return Card(
                                     elevation: 1,
                                     margin: EdgeInsets.only(bottom: isMobile ? 12 : 8),
@@ -1076,11 +1233,11 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                               if (type.contains('Nacional')) typeColor = Colors.blue;
                                               if (type.contains('Estadual')) typeColor = Colors.purple;
                                               if (type.contains('Municipal')) typeColor = Colors.orange;
-                                              return Container(margin: const EdgeInsets.only(bottom: 8), padding: EdgeInsets.all(isMobile ? 14 : 12), decoration: BoxDecoration(color: typeColor.withOpacity(0.15), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.event, color: typeColor, size: isMobile ? 28 : 24));
+                                              return Container(margin: const EdgeInsets.only(bottom: 8), padding: EdgeInsets.all(isMobile ? 14 : 12), decoration: BoxDecoration(color: typeColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.event, color: typeColor, size: isMobile ? 28 : 24));
                                             }).toList()),
                                             SizedBox(width: isMobile ? 18 : 16),
-                                            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(holiday.name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: isMobile ? fontSize + 2 : fontSize)), SizedBox(height: isMobile ? 6 : 4), Text(formattedDate, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: isWeekend ? Colors.red : (Theme.of(context).brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[700]), fontWeight: isWeekend ? FontWeight.w600 : FontWeight.normal, fontSize: isMobile ? fontSize : fontSize - 2)), SizedBox(height: isMobile ? 6 : 4), Wrap(spacing: 6, runSpacing: 6, children: holiday.types.map((type) { Color typeColor = Colors.grey; if (type.contains('Bancário')) typeColor = Colors.green; if (type.contains('Nacional')) typeColor = Colors.blue; if (type.contains('Estadual')) typeColor = Colors.purple; if (type.contains('Municipal')) typeColor = Colors.orange; return Container(padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 8, vertical: isMobile ? 6 : 4), decoration: BoxDecoration(color: typeColor.withOpacity(0.1), borderRadius: BorderRadius.circular(6)), child: Text(type, style: TextStyle(fontSize: isMobile ? 13 : 11, color: typeColor, fontWeight: FontWeight.w600))); }).toList()), if (holiday.specialNote != null) ...[SizedBox(height: isMobile ? 8 : 6), Container(padding: EdgeInsets.all(isMobile ? 10 : 8), decoration: BoxDecoration(color: Colors.amber.withOpacity(0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.amber.withOpacity(0.3), width: 1)), child: Row(children: [Icon(Icons.access_time, size: isMobile ? 18 : 16, color: Colors.amber[800]), SizedBox(width: isMobile ? 8 : 6), Expanded(child: Text(holiday.specialNote!, style: TextStyle(fontSize: isMobile ? 13 : 11, color: Colors.amber[900], fontWeight: FontWeight.w500))) ]))]])),
-                                            if (isWeekend) Container(padding: EdgeInsets.all(isMobile ? 10 : 8), decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), shape: BoxShape.circle), child: Icon(Icons.weekend, color: Colors.red, size: isMobile ? 24 : 20)),
+                                            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(holiday.name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: isMobile ? fontSize + 2 : fontSize)), SizedBox(height: isMobile ? 6 : 4), Text(formattedDate, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: isWeekend ? Colors.red : (Theme.of(context).brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[700]), fontWeight: isWeekend ? FontWeight.w600 : FontWeight.normal, fontSize: isMobile ? fontSize : fontSize - 2)), SizedBox(height: isMobile ? 6 : 4), Wrap(spacing: 6, runSpacing: 6, children: holiday.types.map((type) { Color typeColor = Colors.grey; if (type.contains('Bancário')) typeColor = Colors.green; if (type.contains('Nacional')) typeColor = Colors.blue; if (type.contains('Estadual')) typeColor = Colors.purple; if (type.contains('Municipal')) typeColor = Colors.orange; return Container(padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 8, vertical: isMobile ? 6 : 4), decoration: BoxDecoration(color: typeColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)), child: Text(type, style: TextStyle(fontSize: isMobile ? 13 : 11, color: typeColor, fontWeight: FontWeight.w600))); }).toList()), if (holiday.specialNote != null) ...[SizedBox(height: isMobile ? 8 : 6), Container(padding: EdgeInsets.all(isMobile ? 10 : 8), decoration: BoxDecoration(color: Colors.amber.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.amber.withValues(alpha: 0.3), width: 1)), child: Row(children: [Icon(Icons.access_time, size: isMobile ? 18 : 16, color: Colors.amber[800]), SizedBox(width: isMobile ? 8 : 6), Expanded(child: Text(holiday.specialNote!, style: TextStyle(fontSize: isMobile ? 13 : 11, color: Colors.amber[900], fontWeight: FontWeight.w500))) ]))]])),
+                                            if (isWeekend) Container(padding: EdgeInsets.all(isMobile ? 10 : 8), decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.1), shape: BoxShape.circle), child: Icon(Icons.weekend, color: Colors.red, size: isMobile ? 24 : 20)),
                                           ],
                                         ),
                                       ),
@@ -1103,212 +1260,6 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
       ),
     );
   }
-
-  Future<List<YearlyData>> _fetchYearlyData(int centerYear) async {
-    List<YearlyData> yearlyData = [];
-    for (int offset = -5; offset <= 5; offset++) {
-      int year = centerYear + offset;
-      try {
-        final holidays = await _fetchHolidays(year);
-        int weekdayCount = holidays.where((h) {
-          try {
-            final date = DateFormat('yyyy-MM-dd').parse(h.date);
-            return date.weekday >= DateTime.monday && date.weekday <= DateTime.friday;
-          } catch (e) {
-            return false;
-          }
-        }).length;
-        yearlyData.add(YearlyData(year, weekdayCount));
-      } catch (e) {
-        yearlyData.add(YearlyData(year, 0));
-      }
-    }
-    return yearlyData;
-  }
-
-  // --- CHART AGORA É LINE CHART ---
-  Widget _buildYearlyChart(List<YearlyData> yearlyData, int selectedYear) {
-    return Container(
-      height: 250,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(12)),
-      child: LineChart( 
-        LineChartData(
-          lineTouchData: LineTouchData(
-            touchTooltipData: LineTouchTooltipData(
-              getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
-                return touchedBarSpots.map((barSpot) {
-                  final flSpot = barSpot;
-                  return LineTooltipItem(
-                    '${flSpot.y.toInt()} dias',
-                    const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  );
-                }).toList();
-              },
-            ),
-          ),
-          titlesData: FlTitlesData(
-            show: true,
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 22,
-                getTitlesWidget: (value, meta) {
-                  if (value.toInt() >= 0 && value.toInt() < yearlyData.length) {
-                    final year = yearlyData[value.toInt()].year;
-                    final isSelected = year == selectedYear;
-                    return SideTitleWidget(
-                      axisSide: meta.axisSide,
-                      child: Text(year.toString(), style: TextStyle(fontSize: 10, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? Colors.red : Colors.grey[700])),
-                    );
-                  }
-                  return const Text('');
-                },
-                interval: 1,
-              ),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) => Text(value.toInt().toString(), style: const TextStyle(fontSize: 10)),
-                reservedSize: 28,
-                interval: 2,
-              ),
-            ),
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          ),
-          gridData: FlGridData(show: true, drawVerticalLine: false),
-          borderData: FlBorderData(show: false),
-          lineBarsData: [
-            LineChartBarData(
-              spots: yearlyData.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.weekdayHolidays.toDouble())).toList(),
-              isCurved: true,
-              color: Theme.of(context).colorScheme.primary,
-              barWidth: 3,
-              isStrokeCapRound: true,
-              dotData: FlDotData(show: true),
-              belowBarData: BarAreaData(show: false),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _exportToPdf(List<Holiday> holidays, HolidayStats stats) async {
-    try {
-      final pdf = await _generateHolidaysPdf(holidays, stats);
-      await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PDF gerado com sucesso!'), backgroundColor: Colors.green, duration: Duration(seconds: 2)));
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao gerar PDF: $e'), backgroundColor: Colors.red, duration: const Duration(seconds: 3)));
-    }
-  }
-
-  Future<pw.Document> _generateHolidaysPdf(List<Holiday> holidays, HolidayStats stats) async {
-    final pdf = pw.Document();
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(32),
-        build: (pw.Context context) {
-          List<pw.Widget> pdfBody = [
-            pw.Header(level: 0, child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-              pw.Text('Feriados Vale do Paraíba/Sul de Minas', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 8),
-              pw.Text('Ano: $_selectedYear | Cidade: ${_selectedCity.name} (${_selectedCity.region})', style: const pw.TextStyle(fontSize: 14)),
-              pw.Divider(thickness: 2),
-            ])),
-            pw.SizedBox(height: 20),
-            pw.Container(
-              decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey400), borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8))),
-              padding: const pw.EdgeInsets.all(16),
-              child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-                pw.Text('RESUMO', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-                pw.SizedBox(height: 12),
-                pw.Text('Por Tipo', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
-                pw.SizedBox(height: 6),
-                _buildPdfStatRow('Feriados Bancários', stats.bancarios),
-                _buildPdfStatRow('Feriados Nacionais', stats.nacionais),
-                _buildPdfStatRow('Feriados Estaduais', stats.estaduais),
-                _buildPdfStatRow('Feriados Municipais', stats.municipais),
-                pw.SizedBox(height: 12), pw.Divider(), pw.SizedBox(height: 12),
-                
-                // CORREÇÃO: Removida a redundância no texto do mês
-                pw.Text('Por Mês', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
-                pw.SizedBox(height: 6),
-                ...(() {
-                  final sortedMonthlyStats = stats.monthlyStats.entries.toList();
-                  sortedMonthlyStats.sort((a, b) => a.key.compareTo(b.key));
-                  return sortedMonthlyStats.map((entry) {
-                    final monthStat = entry.value;
-                    // Removido o texto redundante "X dias", apenas o nome do mês
-                    return _buildPdfStatRow(monthStat.monthName, monthStat.totalDays);
-                  }).toList();
-                })(),
-                
-                pw.SizedBox(height: 12), pw.Divider(), pw.SizedBox(height: 12),
-                pw.Text('Por Dia da Semana', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
-                pw.SizedBox(height: 6),
-                _buildPdfStatRow('Segundas-Feiras', stats.segundas),
-                _buildPdfStatRow('Terças-Feiras', stats.tercas),
-                _buildPdfStatRow('Quartas-Feiras', stats.quartas),
-                _buildPdfStatRow('Quintas-Feiras', stats.quintas),
-                _buildPdfStatRow('Sextas-Feiras', stats.sextas),
-                _buildPdfStatRow('Finais de Semana', stats.finaisSemana),
-                pw.SizedBox(height: 8), pw.Divider(), pw.SizedBox(height: 8),
-                _buildPdfStatRow('Total de Feriados Dias Úteis', stats.diasUteis, bold: true),
-              ]),
-            ),
-            
-            // CORREÇÃO CRÍTICA DO PDF: QUEBRA DE PÁGINA **ANTES** DO TÍTULO E TABELA
-            pw.NewPage(), 
-            pw.Text('Lista de Feriados', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-            pw.SizedBox(height: 10),
-          ];
-
-          pdfBody.add(
-            pw.Table(
-              border: pw.TableBorder.all(color: PdfColors.grey300),
-              columnWidths: const {
-                0: pw.FlexColumnWidth(2),
-                1: pw.FlexColumnWidth(3),
-                2: pw.FlexColumnWidth(2),
-              },
-              children: [
-                pw.TableRow(decoration: const pw.BoxDecoration(color: PdfColors.grey300), children: [
-                  _buildPdfTableCell('Data', isHeader: true),
-                  _buildPdfTableCell('Feriado', isHeader: true),
-                  _buildPdfTableCell('Tipo', isHeader: true),
-                ]),
-                ...holidays.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final holiday = entry.value;
-                  final isOdd = index.isOdd;
-                  final formattedDate = _formatDate(holiday.date);
-                  final types = holiday.types.join(', ');
-                  return pw.TableRow(decoration: pw.BoxDecoration(color: isOdd ? PdfColors.grey100 : PdfColors.white), children: [
-                    _buildPdfTableCell(formattedDate),
-                    _buildPdfTableCell(holiday.name),
-                    _buildPdfTableCell(types),
-                  ]);
-                }).toList(),
-              ],
-            ),
-          );
-          return pdfBody;
-        },
-      ),
-    );
-    return pdf;
-  }
-
-  pw.Widget _buildPdfStatRow(String label, int value, {bool bold = false}) {
-    return pw.Padding(padding: const pw.EdgeInsets.symmetric(vertical: 3), child: pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text(label, style: pw.TextStyle(fontSize: 10, fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal)), pw.Text(value.toString(), style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold))]));
-  }
-
-  pw.Widget _buildPdfTableCell(String text, {bool isHeader = false}) {
-    return pw.Padding(padding: const pw.EdgeInsets.all(8), child: pw.Text(text, style: pw.TextStyle(fontSize: isHeader ? 11 : 9, fontWeight: isHeader ? pw.FontWeight.bold : pw.FontWeight.normal)));
-  }
 }
+
+// === FIM DO ARQUIVO ===
