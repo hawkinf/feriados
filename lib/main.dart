@@ -1453,8 +1453,8 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                         SizedBox(height: 8),
                         Expanded(
                           child: GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 4,
                         childAspectRatio: 1.01,
@@ -1498,7 +1498,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                       ))
                                       .toList(),
                                 ),
-                                Expanded(
+                                Flexible(
                                   child: GridView.builder(
                                     shrinkWrap: true,
                                     physics: const NeverScrollableScrollPhysics(),
