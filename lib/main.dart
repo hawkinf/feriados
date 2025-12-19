@@ -862,6 +862,46 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     }
   }
 
+  /// Calcula o próximo feriado a partir de hoje e retorna nome + dias restantes
+  Future<({String name, int daysUntil})?> _getNextHoliday() async {
+    try {
+      final holidays = await _holidaysFuture;
+      if (holidays.isEmpty) return null;
+      
+      final today = DateTime.now();
+      final todayDate = DateTime(today.year, today.month, today.day);
+      
+      // Encontrar o próximo feriado
+      Holiday? nextHoliday;
+      int minDaysDiff = 999999;
+      
+      for (final holiday in holidays) {
+        try {
+          final holidayDate = DateTime.parse(holiday.date);
+          final normalizedHolidayDate = DateTime(holidayDate.year, holidayDate.month, holidayDate.day);
+          
+          // Calcular dias até este feriado
+          int daysDiff = normalizedHolidayDate.difference(todayDate).inDays;
+          
+          // Se é hoje ou no futuro, e é o mais próximo até agora
+          if (daysDiff >= 0 && daysDiff < minDaysDiff) {
+            minDaysDiff = daysDiff;
+            nextHoliday = holiday;
+          }
+        } catch (e) {
+          // Ignorar datas inválidas
+        }
+      }
+      
+      if (nextHoliday == null) return null;
+      
+      return (name: nextHoliday.name, daysUntil: minDaysDiff);
+    } catch (e) {
+      debugPrint('Erro ao buscar próximo feriado: $e');
+      return null;
+    }
+  }
+
   Widget _buildCalendarGrid() {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 800;
@@ -1576,6 +1616,73 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // PRÓXIMO FERIADO
+                  FutureBuilder<({String name, int daysUntil})?>(
+                    future: _getNextHoliday(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return SizedBox.shrink();
+                      }
+                      
+                      if (snapshot.hasData && snapshot.data != null) {
+                        final nextHoliday = snapshot.data!;
+                        final daysWord = nextHoliday.daysUntil == 1 ? 'dia' : 'dias';
+                        
+                        return Card(
+                          elevation: 2,
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                Icon(Icons.event_available, color: Theme.of(context).colorScheme.primary, size: 28),
+                                SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Próximo Feriado',
+                                        style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        nextHoliday.name,
+                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onPrimaryContainer),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        nextHoliday.daysUntil.toString(),
+                                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                                      ),
+                                      Text(
+                                        daysWord,
+                                        style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+                      
+                      return SizedBox.shrink();
+                    },
+                  ),
+                  SizedBox(height: 16),
                   // TIPO DE CALENDÁRIO
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 4, vertical: 12),
