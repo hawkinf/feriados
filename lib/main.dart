@@ -1198,8 +1198,14 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     final startOfWeek = _selectedWeek.subtract(Duration(days: _selectedWeek.weekday % 7));
     final weekDays = <({String label, DateTime date})>[];
     final dayLabels = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
-    final monthNames = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
-    
+    final monthNamesComplete = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+    // Calcular o número da semana (ISO 8601)
+    final jan4 = DateTime(startOfWeek.year, 1, 4);
+    final jan4Weekday = jan4.weekday % 7;
+    final startOfYear = jan4.subtract(Duration(days: jan4Weekday));
+    final weekNumber = ((startOfWeek.difference(startOfYear).inDays) ~/ 7) + 1;
+
     for (int i = 0; i < 7; i++) {
       final date = startOfWeek.add(Duration(days: i));
       weekDays.add((label: dayLabels[i], date: date));
@@ -1261,9 +1267,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
               padding: EdgeInsets.all(16),
               child: Column(
                 children: [
-                  // CABEÇALHO MÊS/ANO
+                  // CABEÇALHO SEMANA/MÊS/ANO
                   Text(
-                    '${monthNames[startOfWeek.month - 1]} ${startOfWeek.year}',
+                    'Semana: # $weekNumber - ${monthNamesComplete[startOfWeek.month - 1]} ${startOfWeek.year}',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 12),
