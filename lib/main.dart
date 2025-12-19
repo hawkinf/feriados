@@ -225,6 +225,8 @@ class HolidayScreen extends StatefulWidget {
 class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProviderStateMixin {
   int _selectedYear = DateTime.now().year;
   int _calendarMonth = DateTime.now().month;
+  late DateTime _selectedWeek;
+  String _calendarType = 'mensal'; // 'semanal', 'mensal', 'anual'
   late CityData _selectedCity;
   late Future<List<Holiday>> _holidaysFuture;
   late AnimationController _animationController;
@@ -238,6 +240,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
+    _selectedWeek = DateTime.now();
     _initializeCities();
     _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
     _loadPreferences();
@@ -1132,6 +1135,350 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     );
   }
 
+  // --- CALENDÁRIO SEMANAL ---
+  Widget _buildWeeklyCalendar() {
+    final startOfWeek = _selectedWeek.subtract(Duration(days: _selectedWeek.weekday % 7));
+    final weekDays = <({String label, DateTime date})>[];
+    final dayLabels = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
+    final monthNames = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+    
+    for (int i = 0; i < 7; i++) {
+      final date = startOfWeek.add(Duration(days: i));
+      weekDays.add((label: dayLabels[i], date: date));
+    }
+    
+    return FutureBuilder<List<Holiday>>(
+      future: _holidaysFuture,
+      builder: (context, snapshot) {
+        Map<String, String> holidayNames = {};
+        Set<String> holidayDays = {};
+        
+        if (snapshot.hasData) {
+          for (final holiday in snapshot.data!) {
+            try {
+              final holidayDate = DateTime.parse(holiday.date);
+              final key = '${holidayDate.year}-${holidayDate.month.toString().padLeft(2, '0')}-${holidayDate.day.toString().padLeft(2, '0')}';
+              holidayDays.add(key);
+              holidayNames[key] = holiday.name;
+            } catch (e) {
+              // Erro ao parsear feriado
+            }
+          }
+        }
+        
+        return Transform.scale(
+          scale: 0.92,
+          alignment: Alignment.topCenter,
+          child: Card(
+            elevation: 1,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  // CABEÇALHO MÊS/ANO
+                  Text(
+                    '${monthNames[startOfWeek.month - 1]} ${startOfWeek.year}',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 12),
+                  // CONTEÚDO DA SEMANA
+                  Row(
+                    children: [
+                      // SETA ESQUERDA
+                      SizedBox(
+                        width: 50,
+                        child: Center(
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            iconSize: 40,
+                            icon: Icon(Icons.arrow_circle_left_rounded),
+                            color: Theme.of(context).colorScheme.primary,
+                            onPressed: () {
+                              setState(() {
+                                _selectedWeek = _selectedWeek.subtract(Duration(days: 7));
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                      // SEMANA
+                      Expanded(
+                        child: Column(
+                          children: weekDays.map((day) {
+                            final now = DateTime.now();
+                            final isToday = day.date.year == now.year && day.date.month == now.month && day.date.day == now.day;
+                            final isWeekend = day.label == 'DOM' || day.label == 'SAB';
+                            final holidayKey = '${day.date.year}-${day.date.month.toString().padLeft(2, '0')}-${day.date.day.toString().padLeft(2, '0')}';
+                            final isHoliday = holidayDays.contains(holidayKey);
+                            final holidayName = isHoliday ? holidayNames[holidayKey] : null;
+                            
+                            Color bgColor = Colors.white;
+                            Color textColor = Theme.of(context).colorScheme.onSurface;
+                            
+                            if (isToday) {
+                              bgColor = Colors.blue;
+                              textColor = Colors.white;
+                            } else if (isHoliday) {
+                              bgColor = Colors.green;
+                              textColor = Colors.white;
+                            } else if (isWeekend) {
+                              bgColor = Colors.red;
+                              textColor = Colors.white;
+                            }
+                            
+                            return Container(
+                              margin: EdgeInsets.only(bottom: 8),
+                              padding: EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: bgColor,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.black, width: 1.5),
+                              ),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    day.label,
+                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textColor),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '${day.date.day}',
+                                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
+                                        ),
+                                        if (isToday)
+                                          Text('HOJE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: textColor)),
+                                        if (isHoliday && holidayName != null)
+                                          Text(
+                                            holidayName,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: textColor),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      // SETA DIREITA
+                      SizedBox(
+                        width: 50,
+                        child: Center(
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            iconSize: 40,
+                            icon: Icon(Icons.arrow_circle_right_rounded),
+                            color: Theme.of(context).colorScheme.primary,
+                            onPressed: () {
+                              setState(() {
+                                _selectedWeek = _selectedWeek.add(Duration(days: 7));
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // --- CALENDÁRIO ANUAL ---
+  Widget _buildAnnualCalendar() {
+    return FutureBuilder<List<Holiday>>(
+      future: _holidaysFuture,
+      builder: (context, snapshot) {
+        Map<String, String> holidayNames = {};
+        Set<String> holidayDays = {};
+        
+        if (snapshot.hasData) {
+          for (final holiday in snapshot.data!) {
+            try {
+              final holidayDate = DateTime.parse(holiday.date);
+              final key = '${holidayDate.year}-${holidayDate.month.toString().padLeft(2, '0')}-${holidayDate.day.toString().padLeft(2, '0')}';
+              holidayDays.add(key);
+              holidayNames[key] = holiday.name;
+            } catch (e) {
+              // Erro ao parsear feriado
+            }
+          }
+        }
+        
+        return Transform.scale(
+          scale: 0.92,
+          alignment: Alignment.topCenter,
+          child: Card(
+            elevation: 1,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: Padding(
+              padding: EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  // SETA ESQUERDA
+                  SizedBox(
+                    width: 50,
+                    child: Center(
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        iconSize: 40,
+                        icon: Icon(Icons.arrow_circle_left_rounded),
+                        color: Theme.of(context).colorScheme.primary,
+                        onPressed: () {
+                          setState(() {
+                            _selectedYear--;
+                            _holidaysFuture = _fetchHolidays(_selectedYear);
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  // GRID ANUAL
+                  Expanded(
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 4,
+                        childAspectRatio: 0.75,
+                        mainAxisSpacing: 4,
+                        crossAxisSpacing: 4,
+                      ),
+                      itemCount: 12,
+                      itemBuilder: (context, monthIndex) {
+                        final month = monthIndex + 1;
+                        final monthNames = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+                        final now = DateTime.now();
+                        final firstDayOfMonth = DateTime(_selectedYear, month, 1);
+                        final firstDayOfWeek = firstDayOfMonth.weekday == 7 ? 1 : firstDayOfMonth.weekday + 1;
+                        final daysInMonth = DateTime(_selectedYear, month + 1, 0).day;
+                        
+                        return Card(
+                          elevation: 1,
+                          child: Padding(
+                            padding: EdgeInsets.all(4),
+                            child: Column(
+                              children: [
+                                Text(
+                                  '${monthNames[monthIndex]} $_selectedYear',
+                                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                                ),
+                                Expanded(
+                                  child: GridView.builder(
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 7,
+                                      childAspectRatio: 1.0,
+                                      mainAxisSpacing: 0.3,
+                                      crossAxisSpacing: 0.3,
+                                    ),
+                                    itemCount: firstDayOfWeek - 1 + daysInMonth,
+                                    itemBuilder: (context, index) {
+                                      if (index < firstDayOfWeek - 1) {
+                                        return SizedBox.shrink();
+                                      }
+                                      
+                                      final day = index - (firstDayOfWeek - 1) + 1;
+                                      final weekday = (index % 7) + 1;
+                                      final isWeekend = weekday == 1 || weekday == 7;
+                                      final isToday = now.year == _selectedYear && now.month == month && now.day == day;
+                                      final holidayKey = '$_selectedYear-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+                                      final isHoliday = holidayDays.contains(holidayKey);
+                                      final holidayName = isHoliday ? holidayNames[holidayKey] : null;
+                                      
+                                      Color bgColor = Colors.white;
+                                      Color textColor = Colors.black;
+                                      
+                                      if (isToday) {
+                                        bgColor = Colors.blue;
+                                        textColor = Colors.white;
+                                      } else if (isHoliday) {
+                                        bgColor = Colors.green;
+                                        textColor = Colors.white;
+                                      } else if (isWeekend) {
+                                        bgColor = Colors.red;
+                                        textColor = Colors.white;
+                                      }
+                                      
+                                      return Tooltip(
+                                        message: holidayName ?? '',
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: bgColor,
+                                            border: Border.all(color: Colors.black, width: 0.3),
+                                            borderRadius: BorderRadius.circular(2),
+                                          ),
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                day.toString(),
+                                                style: TextStyle(fontSize: 7, fontWeight: FontWeight.bold, color: textColor),
+                                              ),
+                                              if (isHoliday && holidayName != null)
+                                                Flexible(
+                                                  child: Text(
+                                                    holidayName,
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    textAlign: TextAlign.center,
+                                                    style: TextStyle(fontSize: 4, color: textColor, height: 1.0),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  // SETA DIREITA
+                  SizedBox(
+                    width: 50,
+                    child: Center(
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        iconSize: 40,
+                        icon: Icon(Icons.arrow_circle_right_rounded),
+                        color: Theme.of(context).colorScheme.primary,
+                        onPressed: () {
+                          setState(() {
+                            _selectedYear++;
+                            _holidaysFuture = _fetchHolidays(_selectedYear);
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -1190,7 +1537,42 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildCalendarGrid(),
+                  // TIPO DE CALENDÁRIO
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Tipo Calendário:',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(width: 12),
+                        DropdownButton<String>(
+                          value: _calendarType,
+                          items: const [
+                            DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
+                            DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
+                            DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
+                          ],
+                          onChanged: (type) {
+                            if (type != null) {
+                              setState(() {
+                                _calendarType = type;
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // CALENDÁRIO CONFORME TIPO SELECIONADO
+                  if (_calendarType == 'mensal')
+                    _buildCalendarGrid()
+                  else if (_calendarType == 'semanal')
+                    _buildWeeklyCalendar()
+                  else if (_calendarType == 'anual')
+                    _buildAnnualCalendar(),
                   SizedBox(height: isMobile ? 28 : 24),
                   // AÑO REFERENCIA COM DROPDOWN
                   Padding(
