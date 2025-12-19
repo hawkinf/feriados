@@ -86,7 +86,8 @@ class HolidayStats {
   int sextas = 0;
   int diasUteis = 0;
   int finaisSemana = 0;
-  
+  int totalFeriadosUnicos = 0;
+
   Map<int, MonthStats> monthlyStats = {}; 
   
   void addMonthStat(int month, String monthName, bool isWeekend) {
@@ -714,13 +715,28 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
 
   HolidayStats _calculateStats(List<Holiday> holidays) {
     final stats = HolidayStats();
+    final Set<String> uniqueDates = {};
+
     for (var holiday in holidays) {
+      // Determinar tipo com prioridade: Nacional > Estadual > Municipal > Bancário
+      bool isNacional = false, isEstadual = false, isMunicipal = false, isBancario = false;
+
       for (var type in holiday.types) {
-        if (type.contains('Bancário')) stats.bancarios++;
-        if (type.contains('Nacional')) stats.nacionais++;
-        if (type.contains('Estadual')) stats.estaduais++;
-        if (type.contains('Municipal')) stats.municipais++;
+        if (type.contains('Nacional')) isNacional = true;
+        if (type.contains('Estadual')) isEstadual = true;
+        if (type.contains('Municipal')) isMunicipal = true;
+        if (type.contains('Bancário')) isBancario = true;
       }
+
+      // Contar por tipo (com repetição, para manter compatibilidade)
+      if (isBancario) stats.bancarios++;
+      if (isNacional) stats.nacionais++;
+      if (isEstadual) stats.estaduais++;
+      if (isMunicipal) stats.municipais++;
+
+      // Contar único por data com prioridade
+      uniqueDates.add(holiday.date);
+
       try {
         final date = DateFormat('yyyy-MM-dd').parse(holiday.date);
         final month = date.month;
@@ -740,6 +756,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
         // Tratamento de erro na análise de feriado
       }
     }
+
+    // Total de feriados únicos (por data)
+    stats.totalFeriadosUnicos = uniqueDates.length;
     return stats;
   }
 
@@ -759,14 +778,11 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
           children: [
             Text('RESUMO DO ANO $_selectedYear', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: fontSize + 2, color: Theme.of(context).colorScheme.primary)),
             const Divider(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: _buildStatBadge('Total de Feriados', stats.nacionais + stats.municipais + stats.bancarios + stats.estaduais, Colors.green, fontSize),
-            ),
-            const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                Expanded(child: _buildStatBadge('Total de Feriados', stats.totalFeriadosUnicos, Colors.green, fontSize)),
+                const SizedBox(width: 8),
                 Expanded(child: _buildStatBadge('Dias Úteis', stats.diasUteis, Colors.indigo, fontSize)),
                 const SizedBox(width: 8),
                 Expanded(child: _buildStatBadge('Finais de Semana', stats.finaisSemana, Colors.red, fontSize)),
