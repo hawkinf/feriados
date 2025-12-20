@@ -1650,7 +1650,8 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
 
     final now = DateTime(_selectedYear, _calendarMonth, 1);
     final firstDayOfWeek = now.weekday % 7; // 0=domingo, 1=segunda, ..., 6=sábado
-    final daysInMonth = DateTime(nextYear, nextMonth, 0).day;
+    // Último dia do mês atual
+    final daysInMonth = DateTime(_calendarMonth == 12 ? _selectedYear + 1 : _selectedYear, _calendarMonth == 12 ? 1 : _calendarMonth + 1, 0).day;
     final prevMonthDays = DateTime(_selectedYear, _calendarMonth, 0).day;
     
     final monthName = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'][_calendarMonth - 1];
