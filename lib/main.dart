@@ -1719,15 +1719,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
           debugPrint('Carregando feriados...');
         }
         
-        return Transform.scale(
-          scale: 0.92,
-          alignment: Alignment.topCenter,
-          child: Card(
-            elevation: 1,
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            child: Padding(
-              padding: EdgeInsets.all(isMobile ? 0.15 : 0.2),
-              child: Row(
+        return Padding(
+          padding: EdgeInsets.all(isMobile ? 0.15 : 0.2),
+          child: Row(
               children: [
                 // SETA ESQUERDA - RETROCEDEM MÊS
                 SizedBox(
@@ -1902,8 +1896,6 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                 ),
               ],
             ),
-          ),
-        ),
         );
       },
     );
