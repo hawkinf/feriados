@@ -10,7 +10,8 @@
       "Bash(git commit -m \"$\\(cat <<''EOF''\nLimpar interface do calendário anual\n\n- Removido seletor de cidade do título da view anual\n- Removido título \\(cidade e ano\\) para deixar mais limpo\n- Reduzido padding dos meses de 6 para 2 \\(menos espaço em branco\\)\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git commit:*)",
       "Bash(flutter analyze:*)",
-      "Bash(flutter build:*)"
+      "Bash(flutter build:*)",
+      "Bash(flutter pub get:*)"
     ]
   }
 }
