@@ -1070,7 +1070,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     final daysInMonth = lastDay.day;
     // Converter: weekday retorna 1=seg, 2=ter, ..., 7=dom
     // Queremos: 0=dom, 1=seg, 2=ter, ..., 6=sab
-    final weekdayStart = firstDay.weekday % 7;
+    // Se weekday=1 (seg), queremos 1. Se weekday=7 (dom), queremos 0.
+    // Fórmula: (weekday == 7) ? 0 : weekday
+    final weekdayStart = (firstDay.weekday == 7) ? 0 : firstDay.weekday;
 
     final dayHeaders = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
     final tableRows = <pw.TableRow>[];
@@ -1220,7 +1222,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     final firstDay = DateTime(year, month, 1);
     final lastDay = DateTime(year, month + 1, 0);
     final daysInMonth = lastDay.day;
-    final weekdayStart = firstDay.weekday % 7;
+    // Converter: weekday retorna 1=seg, 2=ter, ..., 7=dom
+    // Queremos: 0=dom, 1=seg, 2=ter, ..., 6=sab
+    final weekdayStart = (firstDay.weekday == 7) ? 0 : firstDay.weekday;
     final monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
     final dayHeaders = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
