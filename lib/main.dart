@@ -6,6 +6,9 @@ import 'dart:async';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:printing/printing.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'widgets/date_calculator_dialog.dart';
 
 
@@ -727,11 +730,84 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     );
   }
 
-  void _printReport() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Abrindo diálogo de impressão...')),
-    );
-    // TODO: Implementar impressão real com biblioteca printing
+  void _printReport() async {
+    try {
+      // Gerar PDF com o relatório
+      final pdf = pw.Document();
+
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                // Título
+                pw.Text(
+                  'Relatório de Feriados',
+                  style: pw.TextStyle(
+                    fontSize: 24,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 12),
+
+                // Informações básicas
+                pw.Text(
+                  'Cidade: ${_selectedCity.name}',
+                  style: const pw.TextStyle(fontSize: 12),
+                ),
+                pw.Text(
+                  'Ano: $_selectedYear',
+                  style: const pw.TextStyle(fontSize: 12),
+                ),
+                pw.Text(
+                  'Tipo de Calendário: $_calendarType',
+                  style: const pw.TextStyle(fontSize: 12),
+                ),
+                pw.SizedBox(height: 20),
+
+                // Resumo
+                pw.Text(
+                  'Resumo',
+                  style: pw.TextStyle(
+                    fontSize: 16,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 8),
+                pw.Text(
+                  'Este relatório contém informações sobre os feriados do período selecionado.',
+                  style: const pw.TextStyle(fontSize: 11),
+                ),
+                pw.SizedBox(height: 20),
+
+                // Rodapé
+                pw.Divider(),
+                pw.SizedBox(height: 10),
+                pw.Text(
+                  'Gerado em ${DateFormat('dd/MM/yyyy HH:mm', 'pt_BR').format(DateTime.now())}',
+                  style: const pw.TextStyle(fontSize: 10),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+
+      // Mostrar diálogo de impressão
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async {
+          return pdf.save();
+        },
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao imprimir: $e')),
+        );
+      }
+    }
   }
 
   HolidayStats _calculateStats(List<Holiday> holidays) {
