@@ -1729,80 +1729,88 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           // SETA ESQUERDA - MÊS ANTERIOR
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                if (_calendarMonth == 1) {
-                                  _calendarMonth = 12;
-                                  _selectedYear--;
-                                } else {
-                                  _calendarMonth--;
-                                }
-                                _holidaysFuture = _fetchHolidays(_selectedYear);
-                              });
-                            },
-                            child: Text(
-                              '◄',
-                              style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+                          SizedBox(
+                            width: 40,
+                            height: 40,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  if (_calendarMonth == 1) {
+                                    _calendarMonth = 12;
+                                    _selectedYear--;
+                                  } else {
+                                    _calendarMonth--;
+                                  }
+                                  _holidaysFuture = _fetchHolidays(_selectedYear);
+                                  setState(() {});
+                                },
+                                child: Icon(Icons.chevron_left, size: 24, color: Theme.of(context).colorScheme.primary),
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 12),
                           // MÊS
                           Text(
                             monthName,
                             style: TextStyle(fontSize: titleFontSize * 0.9, fontWeight: FontWeight.bold, color: Colors.blue),
                           ),
-                          const SizedBox(width: 12),
                           // SETA DIREITA - MÊS PRÓXIMO
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                if (_calendarMonth == 12) {
-                                  _calendarMonth = 1;
-                                  _selectedYear++;
-                                } else {
-                                  _calendarMonth++;
-                                }
-                                _holidaysFuture = _fetchHolidays(_selectedYear);
-                              });
-                            },
-                            child: Text(
-                              '►',
-                              style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+                          SizedBox(
+                            width: 40,
+                            height: 40,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  if (_calendarMonth == 12) {
+                                    _calendarMonth = 1;
+                                    _selectedYear++;
+                                  } else {
+                                    _calendarMonth++;
+                                  }
+                                  _holidaysFuture = _fetchHolidays(_selectedYear);
+                                  setState(() {});
+                                },
+                                child: Icon(Icons.chevron_right, size: 24, color: Theme.of(context).colorScheme.primary),
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 32),
+                          const SizedBox(width: 40),
                           // SETA ESQUERDA - ANO ANTERIOR
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedYear--;
-                                _holidaysFuture = _fetchHolidays(_selectedYear);
-                              });
-                            },
-                            child: Text(
-                              '◄',
-                              style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+                          SizedBox(
+                            width: 40,
+                            height: 40,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  _selectedYear--;
+                                  _holidaysFuture = _fetchHolidays(_selectedYear);
+                                  setState(() {});
+                                },
+                                child: Icon(Icons.chevron_left, size: 24, color: Theme.of(context).colorScheme.primary),
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 12),
                           // ANO
                           Text(
                             '$_selectedYear',
                             style: TextStyle(fontSize: titleFontSize * 0.9, fontWeight: FontWeight.bold, color: Colors.blue),
                           ),
-                          const SizedBox(width: 12),
                           // SETA DIREITA - ANO PRÓXIMO
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedYear++;
-                                _holidaysFuture = _fetchHolidays(_selectedYear);
-                              });
-                            },
-                            child: Text(
-                              '►',
-                              style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+                          SizedBox(
+                            width: 40,
+                            height: 40,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  _selectedYear++;
+                                  _holidaysFuture = _fetchHolidays(_selectedYear);
+                                  setState(() {});
+                                },
+                                child: Icon(Icons.chevron_right, size: 24, color: Theme.of(context).colorScheme.primary),
+                              ),
                             ),
                           ),
                         ],
