@@ -1724,13 +1724,88 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
           child: Center(
             child: Column(
                     children: [
-                      // TÍTULO DO MÊS/ANO
-                      Center(
-                        child: Text(
-                          '$monthName / $_selectedYear',
-                          style: TextStyle(fontSize: titleFontSize * 0.9, fontWeight: FontWeight.bold, color: Colors.blue),
-                          textAlign: TextAlign.center,
-                        ),
+                      // TÍTULO DO MÊS/ANO COM SETAS
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // SETA ESQUERDA - MÊS ANTERIOR
+                          IconButton(
+                            padding: EdgeInsets.zero,
+                            iconSize: isMobile ? 30 : 35,
+                            icon: Icon(Icons.arrow_circle_left_rounded),
+                            color: Theme.of(context).colorScheme.primary,
+                            onPressed: () {
+                              setState(() {
+                                if (_calendarMonth == 1) {
+                                  _calendarMonth = 12;
+                                  _selectedYear--;
+                                } else {
+                                  _calendarMonth--;
+                                }
+                                _holidaysFuture = _fetchHolidays(_selectedYear);
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 16),
+                          // MÊS
+                          Text(
+                            monthName,
+                            style: TextStyle(fontSize: titleFontSize * 0.9, fontWeight: FontWeight.bold, color: Colors.blue),
+                          ),
+                          const SizedBox(width: 16),
+                          // SETA DIREITA - MÊS PRÓXIMO
+                          IconButton(
+                            padding: EdgeInsets.zero,
+                            iconSize: isMobile ? 30 : 35,
+                            icon: Icon(Icons.arrow_circle_right_rounded),
+                            color: Theme.of(context).colorScheme.primary,
+                            onPressed: () {
+                              setState(() {
+                                if (_calendarMonth == 12) {
+                                  _calendarMonth = 1;
+                                  _selectedYear++;
+                                } else {
+                                  _calendarMonth++;
+                                }
+                                _holidaysFuture = _fetchHolidays(_selectedYear);
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 40),
+                          // SETA ESQUERDA - ANO ANTERIOR
+                          IconButton(
+                            padding: EdgeInsets.zero,
+                            iconSize: isMobile ? 30 : 35,
+                            icon: Icon(Icons.arrow_circle_left_rounded),
+                            color: Theme.of(context).colorScheme.primary,
+                            onPressed: () {
+                              setState(() {
+                                _selectedYear--;
+                                _holidaysFuture = _fetchHolidays(_selectedYear);
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 16),
+                          // ANO
+                          Text(
+                            '$_selectedYear',
+                            style: TextStyle(fontSize: titleFontSize * 0.9, fontWeight: FontWeight.bold, color: Colors.blue),
+                          ),
+                          const SizedBox(width: 16),
+                          // SETA DIREITA - ANO PRÓXIMO
+                          IconButton(
+                            padding: EdgeInsets.zero,
+                            iconSize: isMobile ? 30 : 35,
+                            icon: Icon(Icons.arrow_circle_right_rounded),
+                            color: Theme.of(context).colorScheme.primary,
+                            onPressed: () {
+                              setState(() {
+                                _selectedYear++;
+                                _holidaysFuture = _fetchHolidays(_selectedYear);
+                              });
+                            },
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 0.5),
                       // HEADERS (DOM, SEG, TER, etc)
