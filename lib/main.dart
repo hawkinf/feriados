@@ -1729,12 +1729,8 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           // SETA ESQUERDA - MÊS ANTERIOR
-                          IconButton(
-                            padding: EdgeInsets.zero,
-                            iconSize: isMobile ? 30 : 35,
-                            icon: Icon(Icons.arrow_circle_left_rounded),
-                            color: Theme.of(context).colorScheme.primary,
-                            onPressed: () {
+                          GestureDetector(
+                            onTap: () {
                               setState(() {
                                 if (_calendarMonth == 1) {
                                   _calendarMonth = 12;
@@ -1745,21 +1741,21 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                 _holidaysFuture = _fetchHolidays(_selectedYear);
                               });
                             },
+                            child: Text(
+                              '◄',
+                              style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+                            ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 12),
                           // MÊS
                           Text(
                             monthName,
                             style: TextStyle(fontSize: titleFontSize * 0.9, fontWeight: FontWeight.bold, color: Colors.blue),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 12),
                           // SETA DIREITA - MÊS PRÓXIMO
-                          IconButton(
-                            padding: EdgeInsets.zero,
-                            iconSize: isMobile ? 30 : 35,
-                            icon: Icon(Icons.arrow_circle_right_rounded),
-                            color: Theme.of(context).colorScheme.primary,
-                            onPressed: () {
+                          GestureDetector(
+                            onTap: () {
                               setState(() {
                                 if (_calendarMonth == 12) {
                                   _calendarMonth = 1;
@@ -1770,40 +1766,44 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                 _holidaysFuture = _fetchHolidays(_selectedYear);
                               });
                             },
+                            child: Text(
+                              '►',
+                              style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+                            ),
                           ),
-                          const SizedBox(width: 40),
+                          const SizedBox(width: 32),
                           // SETA ESQUERDA - ANO ANTERIOR
-                          IconButton(
-                            padding: EdgeInsets.zero,
-                            iconSize: isMobile ? 30 : 35,
-                            icon: Icon(Icons.arrow_circle_left_rounded),
-                            color: Theme.of(context).colorScheme.primary,
-                            onPressed: () {
+                          GestureDetector(
+                            onTap: () {
                               setState(() {
                                 _selectedYear--;
                                 _holidaysFuture = _fetchHolidays(_selectedYear);
                               });
                             },
+                            child: Text(
+                              '◄',
+                              style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+                            ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 12),
                           // ANO
                           Text(
                             '$_selectedYear',
                             style: TextStyle(fontSize: titleFontSize * 0.9, fontWeight: FontWeight.bold, color: Colors.blue),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 12),
                           // SETA DIREITA - ANO PRÓXIMO
-                          IconButton(
-                            padding: EdgeInsets.zero,
-                            iconSize: isMobile ? 30 : 35,
-                            icon: Icon(Icons.arrow_circle_right_rounded),
-                            color: Theme.of(context).colorScheme.primary,
-                            onPressed: () {
+                          GestureDetector(
+                            onTap: () {
                               setState(() {
                                 _selectedYear++;
                                 _holidaysFuture = _fetchHolidays(_selectedYear);
                               });
                             },
+                            child: Text(
+                              '►',
+                              style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+                            ),
                           ),
                         ],
                       ),
