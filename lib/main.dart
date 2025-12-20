@@ -1744,7 +1744,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                     _calendarMonth--;
                                   }
                                   _holidaysFuture = _fetchHolidays(_selectedYear);
-                                  setState(() {});
+                                  Future.delayed(Duration.zero, () {
+                                    if (mounted) setState(() {});
+                                  });
                                 },
                                 child: Icon(Icons.chevron_left, size: 24, color: Theme.of(context).colorScheme.primary),
                               ),
@@ -1770,7 +1772,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                     _calendarMonth++;
                                   }
                                   _holidaysFuture = _fetchHolidays(_selectedYear);
-                                  setState(() {});
+                                  Future.delayed(Duration.zero, () {
+                                    if (mounted) setState(() {});
+                                  });
                                 },
                                 child: Icon(Icons.chevron_right, size: 24, color: Theme.of(context).colorScheme.primary),
                               ),
@@ -1787,7 +1791,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                 onTap: () {
                                   _selectedYear--;
                                   _holidaysFuture = _fetchHolidays(_selectedYear);
-                                  setState(() {});
+                                  Future.delayed(Duration.zero, () {
+                                    if (mounted) setState(() {});
+                                  });
                                 },
                                 child: Icon(Icons.chevron_left, size: 24, color: Theme.of(context).colorScheme.primary),
                               ),
@@ -1808,7 +1814,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                 onTap: () {
                                   _selectedYear++;
                                   _holidaysFuture = _fetchHolidays(_selectedYear);
-                                  setState(() {});
+                                  Future.delayed(Duration.zero, () {
+                                    if (mounted) setState(() {});
+                                  });
                                 },
                                 child: Icon(Icons.chevron_right, size: 24, color: Theme.of(context).colorScheme.primary),
                               ),
@@ -1847,7 +1855,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                               _calendarMonth++;
                             }
                             _holidaysFuture = _fetchHolidays(_selectedYear);
-                            setState(() {});
+                            Future.delayed(Duration.zero, () {
+                              if (mounted) setState(() {});
+                            });
                           }
                           // Swipe da esquerda para direita = mês anterior
                           else if (details.primaryVelocity! > 500) {
@@ -1858,7 +1868,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                               _calendarMonth--;
                             }
                             _holidaysFuture = _fetchHolidays(_selectedYear);
-                            setState(() {});
+                            Future.delayed(Duration.zero, () {
+                              if (mounted) setState(() {});
+                            });
                           }
                         },
                         child: GridView.builder(
