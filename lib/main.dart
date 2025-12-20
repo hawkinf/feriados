@@ -245,7 +245,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
   final List<int> availableYears = List.generate(11, (index) => DateTime.now().year - 5 + index);
 
   late final List<CityData> cities;
-  
+
   @override
   void initState() {
     super.initState();
@@ -1232,20 +1232,22 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     final monthNames = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
     final monthRows = <pw.Widget>[];
 
-    // Criar grid de 3x4 (3 colunas, 4 linhas) para 12 meses
-    for (int rowIdx = 0; rowIdx < 4; rowIdx++) {
+    // Criar grid de 2x6 (2 colunas, 6 linhas) para 12 meses com mais espaço
+    for (int rowIdx = 0; rowIdx < 6; rowIdx++) {
       final monthsInRow = <pw.Widget>[];
 
-      for (int colIdx = 0; colIdx < 3; colIdx++) {
-        final monthIdx = rowIdx * 3 + colIdx;
+      for (int colIdx = 0; colIdx < 2; colIdx++) {
+        final monthIdx = rowIdx * 2 + colIdx;
         if (monthIdx < 12) {
           final month = monthIdx + 1;
           monthsInRow.add(
             pw.Expanded(
               child: pw.Container(
-                margin: const pw.EdgeInsets.all(4),
+                margin: const pw.EdgeInsets.all(8),
+                padding: const pw.EdgeInsets.all(12),
                 decoration: pw.BoxDecoration(
-                  border: pw.Border.all(color: PdfColors.black, width: 1),
+                  border: pw.Border.all(color: PdfColors.black, width: 2),
+                  borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
                 ),
                 child: pw.Column(
                   children: [
@@ -1253,36 +1255,39 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                     pw.Container(
                       decoration: pw.BoxDecoration(
                         color: PdfColors.blue,
+                        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
                       ),
-                      padding: const pw.EdgeInsets.all(4),
+                      padding: const pw.EdgeInsets.all(8),
+                      width: double.infinity,
                       child: pw.Text(
-                        monthNames[monthIdx],
+                        '${monthNames[monthIdx]} $year',
                         style: pw.TextStyle(
-                          fontSize: 9,
+                          fontSize: 14,
                           fontWeight: pw.FontWeight.bold,
                           color: PdfColors.white,
                         ),
                         textAlign: pw.TextAlign.center,
                       ),
                     ),
-                    // Mini calendário do mês
+                    pw.SizedBox(height: 8),
+                    // Calendário do mês
                     _buildMiniCalendarPdf(month, year, holidayMap),
                   ],
                 ),
               ),
             ),
           );
+        } else {
+          monthsInRow.add(pw.Expanded(child: pw.SizedBox()));
         }
       }
-
-      monthsInRow.add(pw.Spacer()); // Preencher espaço se houver menos de 3 meses
 
       monthRows.add(
         pw.Row(
           children: monthsInRow,
         ),
       );
-      monthRows.add(pw.SizedBox(height: 4));
+      monthRows.add(pw.SizedBox(height: 8));
     }
 
     return pw.Column(
@@ -1303,15 +1308,19 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     tableRows.add(
       pw.TableRow(
         children: dayHeaders.map((dayHeader) {
+          final isWeekend = dayHeader == 'D' || dayHeader == 'S';
           return pw.Container(
-            padding: const pw.EdgeInsets.symmetric(vertical: 2, horizontal: 1),
-            decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey300, width: 0.5)),
+            padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+            decoration: pw.BoxDecoration(
+              color: isWeekend ? PdfColors.red : PdfColors.blue,
+              border: pw.Border.all(color: PdfColors.black, width: 0.5),
+            ),
             child: pw.Text(
               dayHeader,
               style: pw.TextStyle(
-                fontSize: 6,
+                fontSize: 8,
                 fontWeight: pw.FontWeight.bold,
-                color: PdfColors.black,
+                color: PdfColors.white,
               ),
               textAlign: pw.TextAlign.center,
             ),
@@ -1384,8 +1393,11 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
           children: currentWeek.map((dayStr) {
             if (dayStr.isEmpty) {
               return pw.Container(
-                padding: const pw.EdgeInsets.symmetric(vertical: 2, horizontal: 1),
-                decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey300, width: 0.5)),
+                padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.grey200,
+                  border: pw.Border.all(color: PdfColors.black, width: 0.5),
+                ),
               );
             }
 
@@ -1396,15 +1408,15 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
             final isWeekend = date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
 
             return pw.Container(
-              padding: const pw.EdgeInsets.symmetric(vertical: 2, horizontal: 1),
+              padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
               decoration: pw.BoxDecoration(
                 color: isHoliday ? PdfColors.green : (isWeekend ? PdfColors.red100 : PdfColors.white),
-                border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
+                border: pw.Border.all(color: PdfColors.black, width: 0.5),
               ),
               child: pw.Text(
                 day.toString(),
                 style: pw.TextStyle(
-                  fontSize: 6,
+                  fontSize: 8,
                   color: isHoliday ? PdfColors.white : (isWeekend ? PdfColors.white : PdfColors.black),
                   fontWeight: isHoliday || isWeekend ? pw.FontWeight.bold : pw.FontWeight.normal,
                 ),
