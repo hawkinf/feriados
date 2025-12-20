@@ -1721,34 +1721,8 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
         
         return Padding(
           padding: EdgeInsets.all(isMobile ? 0.15 : 0.2),
-          child: Row(
-              children: [
-                // SETA ESQUERDA - RETROCEDEM MÊS
-                SizedBox(
-                  width: 50,
-                  child: Center(
-                    child: IconButton(
-                      padding: EdgeInsets.zero,
-                      iconSize: isMobile ? 40 : 45,
-                      icon: Icon(Icons.arrow_circle_left_rounded),
-                      color: Theme.of(context).colorScheme.primary,
-                      onPressed: () {
-                        setState(() {
-                          if (_calendarMonth == 1) {
-                            _calendarMonth = 12;
-                            _selectedYear--;
-                          } else {
-                            _calendarMonth--;
-                          }
-                          _holidaysFuture = _fetchHolidays(_selectedYear);
-                        });
-                      },
-                    ),
-                  ),
-                ),
-                // CALENDÁRIO NO MEIO
-                Expanded(
-                  child: Column(
+          child: Center(
+            child: Column(
                     children: [
                       // TÍTULO DO MÊS/ANO
                       Center(
@@ -1870,31 +1844,6 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                       ),
                     ],
                   ),
-                ),
-                // SETA DIREITA - AVANÇA MÊS
-                SizedBox(
-                  width: 50,
-                  child: Center(
-                    child: IconButton(
-                      padding: EdgeInsets.zero,
-                      iconSize: isMobile ? 40 : 45,
-                      icon: Icon(Icons.arrow_circle_right_rounded),
-                      color: Theme.of(context).colorScheme.primary,
-                      onPressed: () {
-                        setState(() {
-                          if (_calendarMonth == 12) {
-                            _calendarMonth = 1;
-                            _selectedYear++;
-                          } else {
-                            _calendarMonth++;
-                          }
-                          _holidaysFuture = _fetchHolidays(_selectedYear);
-                        });
-                      },
-                    ),
-                  ),
-                ),
-              ],
             ),
         );
       },
