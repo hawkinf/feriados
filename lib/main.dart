@@ -1639,19 +1639,19 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     final double fontSize = isMobile ? 16.0 : 18.0;
     final double headerFontSize = isMobile ? 18.0 : 20.0;
     final double titleFontSize = (fontSize - 1) * 2.2;
-    
-    final now = DateTime(_selectedYear, _calendarMonth, 1);
-    final firstDayOfWeek = now.weekday % 7; // 0=domingo, 1=segunda, ..., 6=sábado
-    final daysInMonth = DateTime(_selectedYear, _calendarMonth + 1, 0).day;
-    final prevMonthDays = DateTime(_selectedYear, _calendarMonth, 0).day;
-    
+
     // Calcular mês anterior
     int prevMonth = _calendarMonth == 1 ? 12 : _calendarMonth - 1;
     int prevYear = _calendarMonth == 1 ? _selectedYear - 1 : _selectedYear;
-    
+
     // Calcular próximo mês/ano
     int nextMonth = _calendarMonth == 12 ? 1 : _calendarMonth + 1;
     int nextYear = _calendarMonth == 12 ? _selectedYear + 1 : _selectedYear;
+
+    final now = DateTime(_selectedYear, _calendarMonth, 1);
+    final firstDayOfWeek = now.weekday % 7; // 0=domingo, 1=segunda, ..., 6=sábado
+    final daysInMonth = DateTime(nextYear, nextMonth, 0).day;
+    final prevMonthDays = DateTime(_selectedYear, _calendarMonth, 0).day;
     
     final monthName = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'][_calendarMonth - 1];
     
@@ -1834,18 +1834,43 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                         )).toList(),
                       ),
                       const SizedBox(height: 0.3),
-                      // GRID DO CALENDÁRIO
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 7,
-                          childAspectRatio: 1.0,
-                          mainAxisSpacing: 0.01,
-                          crossAxisSpacing: 0.01,
-                        ),
-                        itemCount: calendarDays.length,
-                        itemBuilder: (context, index) {
+                      // GRID DO CALENDÁRIO COM GESTOS DE SWIPE
+                      GestureDetector(
+                        onHorizontalDragEnd: (details) {
+                          // Swipe da direita para esquerda = próximo mês
+                          if (details.primaryVelocity! < -500) {
+                            if (_calendarMonth == 12) {
+                              _calendarMonth = 1;
+                              _selectedYear++;
+                            } else {
+                              _calendarMonth++;
+                            }
+                            _holidaysFuture = _fetchHolidays(_selectedYear);
+                            setState(() {});
+                          }
+                          // Swipe da esquerda para direita = mês anterior
+                          else if (details.primaryVelocity! > 500) {
+                            if (_calendarMonth == 1) {
+                              _calendarMonth = 12;
+                              _selectedYear--;
+                            } else {
+                              _calendarMonth--;
+                            }
+                            _holidaysFuture = _fetchHolidays(_selectedYear);
+                            setState(() {});
+                          }
+                        },
+                        child: GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 7,
+                            childAspectRatio: 1.0,
+                            mainAxisSpacing: 0.01,
+                            crossAxisSpacing: 0.01,
+                          ),
+                          itemCount: calendarDays.length,
+                          itemBuilder: (context, index) {
                           final dayData = calendarDays[index];
                           final day = dayData.day;
                           final month = dayData.month;
@@ -1924,6 +1949,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                             ),
                           );
                         },
+                        ),
                       ),
                     ],
                   ),
