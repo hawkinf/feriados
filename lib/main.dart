@@ -1048,7 +1048,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     // Queremos: 0=dom, 1=seg, 2=ter, ..., 6=sab
     final weekdayStart = firstDay.weekday % 7;
 
-    final dayHeaders = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+    final dayHeaders = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
     final tableRows = <pw.TableRow>[];
 
     // Cabeçalho com dias da semana
@@ -1056,17 +1056,17 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
       pw.TableRow(
         decoration: pw.BoxDecoration(color: PdfColors.blue),
         children: dayHeaders.map((dayHeader) {
-          final isWeekend = dayHeader == 'Dom' || dayHeader == 'Sab';
+          final isWeekend = dayHeader == 'DOM' || dayHeader == 'SAB';
           return pw.Container(
-            padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+            padding: const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 2),
             decoration: pw.BoxDecoration(
               color: isWeekend ? PdfColors.red : PdfColors.blue,
-              border: pw.Border.all(color: PdfColors.black, width: 0.5),
+              border: pw.Border.all(color: PdfColors.black, width: 1),
             ),
             child: pw.Text(
               dayHeader,
               style: pw.TextStyle(
-                fontSize: 8,
+                fontSize: 10,
                 fontWeight: pw.FontWeight.bold,
                 color: PdfColors.white,
               ),
@@ -1096,32 +1096,54 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
             children: currentWeek.map((dayStr) {
               if (dayStr.isEmpty) {
                 return pw.Container(
-                  padding: const pw.EdgeInsets.all(3),
-                  decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey300, width: 0.5)),
+                  padding: const pw.EdgeInsets.all(6),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.grey200,
+                    border: pw.Border.all(color: PdfColors.black, width: 1),
+                  ),
                   child: pw.Text(''),
                 );
               }
 
               final day = int.parse(dayStr);
               final dateStr = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
-              final isHoliday = holidayMap.containsKey(dateStr);
+              final holiday = holidayMap[dateStr];
+              final isHoliday = holiday != null;
               final date = DateTime(year, month, day);
               final isWeekend = date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
 
               return pw.Container(
-                padding: const pw.EdgeInsets.all(3),
+                padding: const pw.EdgeInsets.all(6),
                 decoration: pw.BoxDecoration(
                   color: isHoliday ? PdfColors.green : (isWeekend ? PdfColors.red100 : PdfColors.white),
-                  border: pw.Border.all(color: PdfColors.black, width: 0.5),
+                  border: pw.Border.all(color: PdfColors.black, width: 1),
                 ),
-                child: pw.Text(
-                  day.toString(),
-                  style: pw.TextStyle(
-                    fontSize: 9,
-                    fontWeight: pw.FontWeight.bold,
-                    color: isHoliday ? PdfColors.white : (isWeekend ? PdfColors.white : PdfColors.black),
-                  ),
-                  textAlign: pw.TextAlign.center,
+                child: pw.Column(
+                  mainAxisAlignment: pw.MainAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      day.toString(),
+                      style: pw.TextStyle(
+                        fontSize: 11,
+                        fontWeight: pw.FontWeight.bold,
+                        color: isHoliday ? PdfColors.white : (isWeekend ? PdfColors.white : PdfColors.black),
+                      ),
+                      textAlign: pw.TextAlign.center,
+                    ),
+                    if (isHoliday)
+                      pw.SizedBox(height: 2),
+                    if (isHoliday)
+                      pw.Text(
+                        holiday.name,
+                        style: pw.TextStyle(
+                          fontSize: 7,
+                          color: PdfColors.white,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                        textAlign: pw.TextAlign.center,
+                        maxLines: 2,
+                      ),
+                  ],
                 ),
               );
             }).toList(),
@@ -1142,32 +1164,54 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
           children: currentWeek.map((dayStr) {
             if (dayStr.isEmpty) {
               return pw.Container(
-                padding: const pw.EdgeInsets.all(3),
-                decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey300, width: 0.5)),
+                padding: const pw.EdgeInsets.all(6),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.grey200,
+                  border: pw.Border.all(color: PdfColors.black, width: 1),
+                ),
                 child: pw.Text(''),
               );
             }
 
             final day = int.parse(dayStr);
             final dateStr = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
-            final isHoliday = holidayMap.containsKey(dateStr);
+            final holiday = holidayMap[dateStr];
+            final isHoliday = holiday != null;
             final date = DateTime(year, month, day);
             final isWeekend = date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
 
             return pw.Container(
-              padding: const pw.EdgeInsets.all(3),
+              padding: const pw.EdgeInsets.all(6),
               decoration: pw.BoxDecoration(
                 color: isHoliday ? PdfColors.green : (isWeekend ? PdfColors.red100 : PdfColors.white),
-                border: pw.Border.all(color: PdfColors.black, width: 0.5),
+                border: pw.Border.all(color: PdfColors.black, width: 1),
               ),
-              child: pw.Text(
-                day.toString(),
-                style: pw.TextStyle(
-                  fontSize: 9,
-                  fontWeight: pw.FontWeight.bold,
-                  color: isHoliday ? PdfColors.white : (isWeekend ? PdfColors.white : PdfColors.black),
-                ),
-                textAlign: pw.TextAlign.center,
+              child: pw.Column(
+                mainAxisAlignment: pw.MainAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    day.toString(),
+                    style: pw.TextStyle(
+                      fontSize: 11,
+                      fontWeight: pw.FontWeight.bold,
+                      color: isHoliday ? PdfColors.white : (isWeekend ? PdfColors.white : PdfColors.black),
+                    ),
+                    textAlign: pw.TextAlign.center,
+                  ),
+                  if (isHoliday)
+                    pw.SizedBox(height: 2),
+                  if (isHoliday)
+                    pw.Text(
+                      holiday.name,
+                      style: pw.TextStyle(
+                        fontSize: 7,
+                        color: PdfColors.white,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                      textAlign: pw.TextAlign.center,
+                      maxLines: 2,
+                    ),
+                ],
               ),
             );
           }).toList(),
@@ -1176,7 +1220,10 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     }
 
     return pw.Table(
-      border: pw.TableBorder.all(color: PdfColors.black, width: 0.5),
+      border: pw.TableBorder.all(color: PdfColors.black, width: 1),
+      columnWidths: {
+        for (int i = 0; i < 7; i++) i: const pw.FlexColumnWidth(1),
+      },
       children: tableRows,
     );
   }
