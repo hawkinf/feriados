@@ -3,9 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
-import 'package:intl/intl.dart'; 
+import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'widgets/date_calculator_dialog.dart';
 
 
 // Versão do App
@@ -486,6 +487,27 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
       _holidaysFuture = _fetchHolidays(_selectedYear);
     });
     _animationController.forward(from: 0);
+  }
+
+  // --- CALCULADORA DE DATAS ---
+  void _showDateCalculator(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: FutureBuilder<List<Holiday>>(
+          future: _fetchHolidays(_selectedYear),
+          builder: (context, snapshot) {
+            final holidays = snapshot.data ?? <Holiday>[];
+            return DateCalculatorDialog(
+              referenceDate: DateTime.now(),
+              holidays: holidays,
+              selectedCity: _selectedCity,
+            );
+          },
+        ),
+      ),
+    );
   }
 
   // --- MENU SOBRE (LAYOUT RESTAURADO COM SWITCH ABAIXO DO AUTOR) ---
@@ -1657,6 +1679,15 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
               Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: IconButton(
+                  icon: const Icon(Icons.calculate),
+                  iconSize: isMobile ? 28 : 24,
+                  tooltip: 'Calcular Datas',
+                  onPressed: () => _showDateCalculator(context),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: IconButton(
                   icon: const Icon(Icons.info_outline),
                   iconSize: isMobile ? 28 : 24,
                   tooltip: 'Sobre',
@@ -1693,153 +1724,136 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // PRÓXIMO FERIADO E TIPO DE CALENDÁRIO
+                  // PRÓXIMO FERIADO (Grande)
+                  FutureBuilder<({String name, int daysUntil})?>(
+                    future: _getNextHoliday(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return SizedBox.shrink();
+                      }
+
+                      if (snapshot.hasData && snapshot.data != null) {
+                        final nextHoliday = snapshot.data!;
+                        final daysWord = nextHoliday.daysUntil == 1 ? 'dia' : 'dias';
+
+                        return Card(
+                          elevation: 2,
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                Icon(Icons.event_available, color: Theme.of(context).colorScheme.primary, size: 28),
+                                SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Próximo Feriado',
+                                        style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        nextHoliday.name,
+                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onPrimaryContainer),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        nextHoliday.daysUntil.toString(),
+                                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                                      ),
+                                      Text(
+                                        daysWord,
+                                        style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      return SizedBox.shrink();
+                    },
+                  ),
+                  SizedBox(height: 12),
+                  // CIDADE E TIPO DE CALENDÁRIO (lado a lado)
                   Row(
                     children: [
-                      // PRÓXIMO FERIADO + CIDADE
+                      // SELEÇÃO DE CIDADE
                       Expanded(
                         flex: 2,
-                        child: Column(
-                          children: [
-                            FutureBuilder<({String name, int daysUntil})?>(
-                              future: _getNextHoliday(),
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState == ConnectionState.waiting) {
-                                  return SizedBox.shrink();
-                                }
-
-                                if (snapshot.hasData && snapshot.data != null) {
-                                  final nextHoliday = snapshot.data!;
-                                  final daysWord = nextHoliday.daysUntil == 1 ? 'dia' : 'dias';
-
-                                  return Card(
-                                    elevation: 2,
-                                    color: Theme.of(context).colorScheme.primaryContainer,
-                                    child: Padding(
-                                      padding: EdgeInsets.all(16),
-                                      child: Row(
-                                        children: [
-                                          Icon(Icons.event_available, color: Theme.of(context).colorScheme.primary, size: 28),
-                                          SizedBox(width: 16),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'Próximo Feriado',
-                                                  style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
-                                                ),
-                                                SizedBox(height: 4),
-                                                Text(
-                                                  nextHoliday.name,
-                                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onPrimaryContainer),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          Container(
-                                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                            decoration: BoxDecoration(
-                                              color: Theme.of(context).colorScheme.primary,
-                                              borderRadius: BorderRadius.circular(20),
-                                            ),
-                                            child: Column(
-                                              mainAxisAlignment: MainAxisAlignment.center,
-                                              children: [
-                                                Text(
-                                                  nextHoliday.daysUntil.toString(),
-                                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                                                ),
-                                                Text(
-                                                  daysWord,
-                                                  style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                }
-
-                                return SizedBox.shrink();
-                              },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.outline,
+                              width: 2,
                             ),
-                            SizedBox(height: 12),
-                            // SELEÇÃO DE CIDADE
-                            Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: Theme.of(context).colorScheme.outline,
-                                  width: 2,
-                                ),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: DropdownButton<CityData>(
-                                value: _selectedCity,
-                                isExpanded: true,
-                                underline: const SizedBox(),
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
-                                items: cities.where((city) => city.region == 'Vale do Paraíba').map((city) => DropdownMenuItem<CityData>(value: city, child: Text(city.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface), overflow: TextOverflow.ellipsis))).toList(),
-                                onChanged: (newCity) {
-                                  if (newCity != null) {
-                                    setState(() {
-                                      _selectedCity = newCity;
-                                      _savePreferences();
-                                      _reloadData();
-                                    });
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: DropdownButton<CityData>(
+                            value: _selectedCity,
+                            isExpanded: true,
+                            underline: const SizedBox(),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+                            items: cities.where((city) => city.region == 'Vale do Paraíba').map((city) => DropdownMenuItem<CityData>(value: city, child: Text(city.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface), overflow: TextOverflow.ellipsis))).toList(),
+                            onChanged: (newCity) {
+                              if (newCity != null) {
+                                setState(() {
+                                  _selectedCity = newCity;
+                                  _savePreferences();
+                                  _reloadData();
+                                });
+                              }
+                            },
+                          ),
                         ),
                       ),
                       SizedBox(width: 12),
                       // TIPO DE CALENDÁRIO
                       Expanded(
                         flex: 1,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Text(
-                                'Tipo de Calendário',
-                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.grey[600]),
-                              ),
-                              SizedBox(height: 8),
-                              Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Theme.of(context).colorScheme.outline,
-                                    width: 2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: DropdownButton<String>(
-                                  value: _calendarType,
-                                  isExpanded: true,
-                                  underline: const SizedBox(),
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
-                                  items: const [
-                                    DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
-                                    DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
-                                    DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
-                                  ],
-                                  onChanged: (type) {
-                                    if (type != null) {
-                                      setState(() {
-                                        _calendarType = type;
-                                      });
-                                    }
-                                  },
-                                ),
-                              ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.outline,
+                              width: 2,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: DropdownButton<String>(
+                            value: _calendarType,
+                            isExpanded: true,
+                            underline: const SizedBox(),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+                            items: const [
+                              DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
+                              DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
+                              DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
                             ],
+                            onChanged: (type) {
+                              if (type != null) {
+                                setState(() {
+                                  _calendarType = type;
+                                });
+                              }
+                            },
                           ),
                         ),
                       ),
