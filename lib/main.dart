@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'widgets/date_calculator_dialog.dart';
-import 'widgets/pdf_export_dialog.dart';
 
 
 // Versão do App
@@ -728,21 +727,11 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     );
   }
 
-  void _showPdfExportPreview() {
-    showDialog(
-      context: context,
-      builder: (context) => PdfExportDialog(
-        cityName: _selectedCity.name,
-        calendarType: _calendarType,
-        selectedYear: _selectedYear,
-        selectedMonth: _calendarMonth,
-        onCalendarTypeChanged: () {
-          // Callback para possíveis mudanças futuras
-        },
-        stats: {}, // Pode passar stats se necessário
-        holidays: [], // Será carregado no FutureBuilder do dialog
-      ),
+  void _printReport() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Abrindo diálogo de impressão...')),
     );
+    // TODO: Implementar impressão real com biblioteca printing
   }
 
   HolidayStats _calculateStats(List<Holiday> holidays) {
@@ -1876,14 +1865,14 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                         ),
                       ),
                       SizedBox(width: 12),
-                      // BOTÃO PDF
+                      // BOTÃO IMPRIMIR RELATÓRIO
                       IconButton(
-                        icon: const Icon(Icons.picture_as_pdf),
+                        icon: const Icon(Icons.print),
                         color: Colors.grey[600],
                         iconSize: 24,
-                        tooltip: 'Exportar PDF',
+                        tooltip: 'Imprimir Relatório',
                         onPressed: () {
-                          _showPdfExportPreview();
+                          _printReport();
                         },
                       ),
                     ],
