@@ -796,21 +796,24 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                   pw.Column(
                     children: [
                       for (int row = 0; row < 6; row++)
-                        pw.Row(
-                          children: [
-                            pw.Expanded(
-                              child: pw.Padding(
-                                padding: const pw.EdgeInsets.all(4),
-                                child: _buildMiniCalendarPdf(row * 2 + 1, _selectedYear, uniqueHolidaysMap),
+                        pw.SizedBox(
+                          width: double.infinity,
+                          child: pw.Row(
+                            children: [
+                              pw.Expanded(
+                                child: pw.Padding(
+                                  padding: const pw.EdgeInsets.all(4),
+                                  child: _buildMiniCalendarPdf(row * 2 + 1, _selectedYear, uniqueHolidaysMap),
+                                ),
                               ),
-                            ),
-                            pw.Expanded(
-                              child: pw.Padding(
-                                padding: const pw.EdgeInsets.all(4),
-                                child: _buildMiniCalendarPdf(row * 2 + 2, _selectedYear, uniqueHolidaysMap),
+                              pw.Expanded(
+                                child: pw.Padding(
+                                  padding: const pw.EdgeInsets.all(4),
+                                  child: _buildMiniCalendarPdf(row * 2 + 2, _selectedYear, uniqueHolidaysMap),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                     ],
                   ),
@@ -1134,37 +1137,19 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
               final isWeekend = date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
 
               return pw.Container(
-                padding: const pw.EdgeInsets.all(6),
+                padding: const pw.EdgeInsets.all(8),
                 decoration: pw.BoxDecoration(
                   color: isHoliday ? PdfColors.green : (isWeekend ? PdfColors.red100 : PdfColors.white),
                   border: pw.Border.all(color: PdfColors.black, width: 1),
                 ),
-                child: pw.Column(
-                  mainAxisAlignment: pw.MainAxisAlignment.start,
-                  children: [
-                    pw.Text(
-                      day.toString(),
-                      style: pw.TextStyle(
-                        fontSize: 11,
-                        fontWeight: pw.FontWeight.bold,
-                        color: isHoliday ? PdfColors.white : (isWeekend ? PdfColors.white : PdfColors.black),
-                      ),
-                      textAlign: pw.TextAlign.center,
-                    ),
-                    if (isHoliday)
-                      pw.SizedBox(height: 2),
-                    if (isHoliday)
-                      pw.Text(
-                        holiday.name,
-                        style: pw.TextStyle(
-                          fontSize: 7,
-                          color: PdfColors.white,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                        textAlign: pw.TextAlign.center,
-                        maxLines: 2,
-                      ),
-                  ],
+                child: pw.Text(
+                  day.toString(),
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                    color: isHoliday ? PdfColors.white : (isWeekend ? PdfColors.white : PdfColors.black),
+                  ),
+                  textAlign: pw.TextAlign.center,
                 ),
               );
             }).toList(),
@@ -1202,37 +1187,19 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
             final isWeekend = date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
 
             return pw.Container(
-              padding: const pw.EdgeInsets.all(6),
+              padding: const pw.EdgeInsets.all(8),
               decoration: pw.BoxDecoration(
                 color: isHoliday ? PdfColors.green : (isWeekend ? PdfColors.red100 : PdfColors.white),
                 border: pw.Border.all(color: PdfColors.black, width: 1),
               ),
-              child: pw.Column(
-                mainAxisAlignment: pw.MainAxisAlignment.start,
-                children: [
-                  pw.Text(
-                    day.toString(),
-                    style: pw.TextStyle(
-                      fontSize: 11,
-                      fontWeight: pw.FontWeight.bold,
-                      color: isHoliday ? PdfColors.white : (isWeekend ? PdfColors.white : PdfColors.black),
-                    ),
-                    textAlign: pw.TextAlign.center,
-                  ),
-                  if (isHoliday)
-                    pw.SizedBox(height: 2),
-                  if (isHoliday)
-                    pw.Text(
-                      holiday.name,
-                      style: pw.TextStyle(
-                        fontSize: 7,
-                        color: PdfColors.white,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
-                      textAlign: pw.TextAlign.center,
-                      maxLines: 2,
-                    ),
-                ],
+              child: pw.Text(
+                day.toString(),
+                style: pw.TextStyle(
+                  fontSize: 12,
+                  fontWeight: pw.FontWeight.bold,
+                  color: isHoliday ? PdfColors.white : (isWeekend ? PdfColors.white : PdfColors.black),
+                ),
+                textAlign: pw.TextAlign.center,
               ),
             );
           }).toList(),
