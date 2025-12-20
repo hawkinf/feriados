@@ -1065,16 +1065,37 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
   }
 
   pw.Widget _buildCalendarTablePdf(int month, int year, Map<String, Holiday> holidayMap) {
-    final firstDay = DateTime(year, month, 1);
-    final lastDay = DateTime(year, month + 1, 0);
-    final daysInMonth = lastDay.day;
-    // Converter: weekday retorna 1=seg, 2=ter, ..., 7=dom
-    // Queremos: 0=dom, 1=seg, 2=ter, ..., 6=sab
-    // Se weekday=1 (seg), queremos 1. Se weekday=7 (dom), queremos 0.
-    // Fórmula: (weekday == 7) ? 0 : weekday
-    final weekdayStart = (firstDay.weekday == 7) ? 0 : firstDay.weekday;
+    // Replicar exatamente a lógica da tela (_buildCalendarGrid)
+    final now = DateTime(year, month, 1);
+    final firstDayOfWeek = (now.weekday == 7) ? 0 : now.weekday;
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+    final prevMonthDays = DateTime(year, month, 0).day;
 
-    final dayHeaders = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
+    int prevMonth = month == 1 ? 12 : month - 1;
+    int prevYear = month == 1 ? year - 1 : year;
+
+    int nextMonth = month == 12 ? 1 : month + 1;
+    int nextYear = month == 12 ? year + 1 : year;
+
+    final List<String> dayHeaders = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
+    List<({int day, int month, int year, bool isCurrentMonth})> calendarDays = [];
+
+    // Dias do mês anterior
+    for (int i = prevMonthDays - firstDayOfWeek + 1; i <= prevMonthDays; i++) {
+      calendarDays.add((day: i, month: prevMonth, year: prevYear, isCurrentMonth: false));
+    }
+
+    // Dias do mês atual
+    for (int i = 1; i <= daysInMonth; i++) {
+      calendarDays.add((day: i, month: month, year: year, isCurrentMonth: true));
+    }
+
+    // Dias do próximo mês
+    int remainingCells = (7 - (calendarDays.length % 7)) % 7;
+    for (int i = 1; i <= remainingCells; i++) {
+      calendarDays.add((day: i, month: nextMonth, year: nextYear, isCurrentMonth: false));
+    }
+
     final tableRows = <pw.TableRow>[];
 
     // Cabeçalho com dias da semana
@@ -1084,7 +1105,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
         children: dayHeaders.map((dayHeader) {
           final isWeekend = dayHeader == 'DOM' || dayHeader == 'SAB';
           return pw.Container(
-            padding: const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+            padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
             decoration: pw.BoxDecoration(
               color: isWeekend ? PdfColors.red : PdfColors.blue,
               border: pw.Border.all(color: PdfColors.black, width: 1),
@@ -1092,7 +1113,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
             child: pw.Text(
               dayHeader,
               style: pw.TextStyle(
-                fontSize: 10,
+                fontSize: 9,
                 fontWeight: pw.FontWeight.bold,
                 color: PdfColors.white,
               ),
@@ -1103,105 +1124,73 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
       ),
     );
 
-    // Montar as semanas
-    List<String> currentWeek = [];
-
-    // Preencher dias vazios antes do primeiro dia
-    for (int i = 0; i < weekdayStart; i++) {
-      currentWeek.add('');
-    }
-
-    // Preencher dias do mês
-    for (int day = 1; day <= daysInMonth; day++) {
-      currentWeek.add(day.toString());
-
-      if (currentWeek.length == 7) {
-        // Adicionar linha com 7 dias
-        tableRows.add(
-          pw.TableRow(
-            children: currentWeek.map((dayStr) {
-              if (dayStr.isEmpty) {
-                return pw.Container(
-                  padding: const pw.EdgeInsets.all(6),
-                  decoration: pw.BoxDecoration(
-                    color: PdfColors.white,
-                    border: pw.Border.all(color: PdfColors.black, width: 1),
-                  ),
-                  child: pw.Text(''),
-                );
-              }
-
-              final day = int.parse(dayStr);
-              final dateStr = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
-              final holiday = holidayMap[dateStr];
-              final isHoliday = holiday != null;
-              final date = DateTime(year, month, day);
-              final isWeekend = date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
-
-              return pw.Container(
-                padding: const pw.EdgeInsets.all(8),
-                decoration: pw.BoxDecoration(
-                  color: isHoliday ? PdfColors.green : (isWeekend ? PdfColors.red100 : PdfColors.white),
-                  border: pw.Border.all(color: PdfColors.black, width: 1),
-                ),
-                child: pw.Text(
-                  day.toString(),
-                  style: pw.TextStyle(
-                    fontSize: 12,
-                    fontWeight: pw.FontWeight.bold,
-                    color: isHoliday ? PdfColors.white : (isWeekend ? PdfColors.white : PdfColors.black),
-                  ),
-                  textAlign: pw.TextAlign.center,
-                ),
-              );
-            }).toList(),
-          ),
-        );
-        currentWeek = [];
-      }
-    }
-
-    // Preencher última semana se necessário
-    if (currentWeek.isNotEmpty) {
-      while (currentWeek.length < 7) {
-        currentWeek.add('');
-      }
-
+    // Dividir em semanas
+    for (int i = 0; i < calendarDays.length; i += 7) {
+      final week = calendarDays.sublist(i, i + 7);
       tableRows.add(
         pw.TableRow(
-          children: currentWeek.map((dayStr) {
-            if (dayStr.isEmpty) {
-              return pw.Container(
-                padding: const pw.EdgeInsets.all(6),
-                decoration: pw.BoxDecoration(
-                  color: PdfColors.white,
-                  border: pw.Border.all(color: PdfColors.black, width: 1),
-                ),
-                child: pw.Text(''),
-              );
+          children: week.map((dayData) {
+            final day = dayData.day;
+            final dayMonth = dayData.month;
+            final dayYear = dayData.year;
+            final isCurrentMonth = dayData.isCurrentMonth;
+            final dateObj = DateTime(dayYear, dayMonth, day);
+            final dayOfWeek = (dateObj.weekday == 7) ? 0 : dateObj.weekday;
+            final holidayKey = '$dayYear-${dayMonth.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+            final isHoliday = holidayMap.containsKey(holidayKey);
+            final holidayName = isHoliday ? holidayMap[holidayKey]?.name : null;
+
+            PdfColor bgColor = PdfColors.white;
+            PdfColor textColor = PdfColors.black;
+
+            if (isHoliday) {
+              bgColor = PdfColors.green;
+              textColor = PdfColors.white;
+            } else if (dayOfWeek == 0) {
+              bgColor = PdfColors.red;
+              textColor = PdfColors.white;
+            } else if (dayOfWeek == 6) {
+              bgColor = PdfColor.fromHex('#EF9A9A');
+              textColor = PdfColors.white;
+            } else if (!isCurrentMonth) {
+              bgColor = PdfColor.fromHex('#4B4B4B');
+              textColor = PdfColors.white;
             }
 
-            final day = int.parse(dayStr);
-            final dateStr = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
-            final holiday = holidayMap[dateStr];
-            final isHoliday = holiday != null;
-            final date = DateTime(year, month, day);
-            final isWeekend = date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
-
             return pw.Container(
-              padding: const pw.EdgeInsets.all(8),
+              padding: const pw.EdgeInsets.all(6),
               decoration: pw.BoxDecoration(
-                color: isHoliday ? PdfColors.green : (isWeekend ? PdfColors.red100 : PdfColors.white),
-                border: pw.Border.all(color: PdfColors.black, width: 1),
+                color: bgColor,
+                border: pw.Border.all(color: PdfColors.black, width: 0.8),
+                borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
               ),
-              child: pw.Text(
-                day.toString(),
-                style: pw.TextStyle(
-                  fontSize: 12,
-                  fontWeight: pw.FontWeight.bold,
-                  color: isHoliday ? PdfColors.white : (isWeekend ? PdfColors.white : PdfColors.black),
-                ),
-                textAlign: pw.TextAlign.center,
+              child: pw.Column(
+                mainAxisAlignment: pw.MainAxisAlignment.center,
+                children: [
+                  pw.Text(
+                    day.toString(),
+                    style: pw.TextStyle(
+                      fontSize: 10,
+                      fontWeight: pw.FontWeight.bold,
+                      color: textColor,
+                    ),
+                    textAlign: pw.TextAlign.center,
+                  ),
+                  if (isHoliday && holidayName != null)
+                    pw.SizedBox(height: 1),
+                  if (isHoliday && holidayName != null)
+                    pw.Text(
+                      holidayName,
+                      maxLines: 1,
+                      overflow: pw.TextOverflow.clip,
+                      textAlign: pw.TextAlign.center,
+                      style: pw.TextStyle(
+                        fontSize: 5,
+                        fontWeight: pw.FontWeight.bold,
+                        color: textColor,
+                      ),
+                    ),
+                ],
               ),
             );
           }).toList(),
