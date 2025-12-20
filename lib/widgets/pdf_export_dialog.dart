@@ -182,16 +182,12 @@ class _PdfExportDialogState extends State<PdfExportDialog> {
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
                     onPressed: () {
-                      // TODO: Implementar geração real do PDF com biblioteca (pdf ou printing)
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('PDF salvo com sucesso!'),
-                        ),
-                      );
+                      // A geração real do PDF é feita através do botão "Imprimir Relatório"
+                      // Este é apenas um preview dialog
                       Navigator.pop(context);
                     },
-                    icon: const Icon(Icons.download),
-                    label: const Text('Exportar PDF'),
+                    icon: const Icon(Icons.close),
+                    label: const Text('Fechar'),
                   ),
                 ],
               ),

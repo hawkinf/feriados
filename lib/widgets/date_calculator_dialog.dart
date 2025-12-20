@@ -205,17 +205,6 @@ class _DateCalculatorDialogState extends State<DateCalculatorDialog> {
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Fechar'),
                     ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        // TODO: Implementar geração real do PDF
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('PDF salvo com sucesso')),
-                        );
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Exportar PDF'),
-                    ),
                   ],
                 ),
               ],
