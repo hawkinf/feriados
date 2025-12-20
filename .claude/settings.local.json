@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "Bash(dart analyze:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nMelhoras na interface do calendário anual\n\n- Aumentado calendário anual em 20% \\(fontes e espaçamento\\)\n- Adicionado seletor de cidade do Vale do Paraíba no título\n- Removido ano do título \\(agora mostra: CalendarPRO - [Cidade]\\)\n- Adicionado widget \"Próximo Feriado\" no topo da view anual\n- Movido \"Tipo de Calendário\" para embaixo do calendário anual\n- Removido seletor duplicado do topo das outras views\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nCorrigir seletor de cidade e tipo de calendário\n\n- Envolvido DropdownButton de cidade em Expanded para funcionar corretamente\n- Movido seletor \"Tipo de Calendário\" para local sempre visível \\(antes das views\\)\n- Removido seletor duplicado que estava apenas na view anual\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nReduzir espaçamento entre os meses no calendário anual\n\n- Ajustado mainAxisSpacing de 4 para 0\n- Ajustado crossAxisSpacing de 4 para 0\n- Meses agora mais próximos uns dos outros\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nLimpar interface do calendário anual\n\n- Removido seletor de cidade do título da view anual\n- Removido título \\(cidade e ano\\) para deixar mais limpo\n- Reduzido padding dos meses de 6 para 2 \\(menos espaço em branco\\)\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(flutter build:*)"
+    ]
+  }
+}

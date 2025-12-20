@@ -1038,6 +1038,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                           } else {
                             _calendarMonth--;
                           }
+                          _holidaysFuture = _fetchHolidays(_selectedYear);
                         });
                       },
                     ),
@@ -1102,17 +1103,14 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                           Color bgColor = Colors.white;
                           Color textColor = Theme.of(context).colorScheme.onSurface;
                           double opacity = 1.0;
-                          
+
                           if (isToday) {
                             bgColor = Colors.blue;
                             textColor = Colors.white;
-                          } else if (isHoliday && isCurrentMonth) {
-                            bgColor = Colors.green;
-                            textColor = Colors.white;
-                            opacity = 1.0;
-                          } else if (isHoliday && !isCurrentMonth) {
-                            bgColor = Colors.lightGreen[300] ?? Colors.lightGreen;
-                            textColor = Colors.grey[700] ?? Colors.grey;
+                          } else if (isHoliday) {
+                            // Feriados sempre verde com letras brancas, independente do dia da semana
+                            bgColor = isCurrentMonth ? Colors.green : (Colors.lightGreen[300] ?? Colors.lightGreen);
+                            textColor = isCurrentMonth ? Colors.white : (Colors.grey[700] ?? Colors.grey);
                             opacity = 1.0;
                           } else if (dayOfWeek == 0) { // Domingo
                             bgColor = Colors.red;
@@ -1188,6 +1186,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                           } else {
                             _calendarMonth++;
                           }
+                          _holidaysFuture = _fetchHolidays(_selectedYear);
                         });
                       },
                     ),
@@ -1544,14 +1543,15 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                         if (isToday) {
                                           bgColor = Colors.blue;
                                           textColor = Colors.white;
-                                        } else if (dayOfWeek == 0) { // Domingo (verifica antes de feriado)
+                                        } else if (isHoliday) {
+                                          // Feriados sempre verde com letras brancas, independente do dia da semana
+                                          bgColor = Colors.green;
+                                          textColor = Colors.white;
+                                        } else if (dayOfWeek == 0) { // Domingo
                                           bgColor = Colors.red;
                                           textColor = Colors.white;
                                         } else if (dayOfWeek == 6) { // Sábado
                                           bgColor = Color(0xFFEF9A9A); // Vermelho mais claro
-                                          textColor = Colors.white;
-                                        } else if (isHoliday) {
-                                          bgColor = Colors.green;
                                           textColor = Colors.white;
                                         }
 
@@ -1904,6 +1904,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                   }
                                   return Card(
                                     elevation: 1,
+                                    color: isWeekend ? Colors.green : null,
                                     margin: EdgeInsets.only(bottom: isMobile ? 12 : 8),
                                     child: InkWell(
                                       borderRadius: BorderRadius.circular(16),
@@ -1919,11 +1920,11 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                               if (type.contains('Nacional')) typeColor = Colors.blue;
                                               if (type.contains('Estadual')) typeColor = Colors.purple;
                                               if (type.contains('Municipal')) typeColor = Colors.orange;
-                                              return Container(margin: const EdgeInsets.only(bottom: 8), padding: EdgeInsets.all(isMobile ? 14 : 12), decoration: BoxDecoration(color: typeColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.event, color: typeColor, size: isMobile ? 28 : 24));
+                                              return Container(margin: const EdgeInsets.only(bottom: 8), padding: EdgeInsets.all(isMobile ? 14 : 12), decoration: BoxDecoration(color: isWeekend ? Colors.white.withValues(alpha: 0.2) : typeColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.event, color: isWeekend ? Colors.white : typeColor, size: isMobile ? 28 : 24));
                                             }).toList()),
                                             SizedBox(width: isMobile ? 18 : 16),
-                                            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(holiday.name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: isMobile ? fontSize + 2 : fontSize)), SizedBox(height: isMobile ? 6 : 4), Text(formattedDate, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: isWeekend ? Colors.red : (Theme.of(context).brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[700]), fontWeight: isWeekend ? FontWeight.w600 : FontWeight.normal, fontSize: isMobile ? fontSize : fontSize - 2)), SizedBox(height: isMobile ? 6 : 4), Wrap(spacing: 6, runSpacing: 6, children: holiday.types.map((type) { Color typeColor = Colors.grey; if (type.contains('Bancário')) typeColor = Colors.green; if (type.contains('Nacional')) typeColor = Colors.blue; if (type.contains('Estadual')) typeColor = Colors.purple; if (type.contains('Municipal')) typeColor = Colors.orange; return Container(padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 8, vertical: isMobile ? 6 : 4), decoration: BoxDecoration(color: typeColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)), child: Text(type, style: TextStyle(fontSize: isMobile ? 13 : 11, color: typeColor, fontWeight: FontWeight.w600))); }).toList()), if (holiday.specialNote != null) ...[SizedBox(height: isMobile ? 8 : 6), Container(padding: EdgeInsets.all(isMobile ? 10 : 8), decoration: BoxDecoration(color: Colors.amber.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.amber.withValues(alpha: 0.3), width: 1)), child: Row(children: [Icon(Icons.access_time, size: isMobile ? 18 : 16, color: Colors.amber[800]), SizedBox(width: isMobile ? 8 : 6), Expanded(child: Text(holiday.specialNote!, style: TextStyle(fontSize: isMobile ? 13 : 11, color: Colors.amber[900], fontWeight: FontWeight.w500))) ]))]])),
-                                            if (isWeekend) Container(padding: EdgeInsets.all(isMobile ? 10 : 8), decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.1), shape: BoxShape.circle), child: Icon(Icons.weekend, color: Colors.red, size: isMobile ? 24 : 20)),
+                                            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(holiday.name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: isMobile ? fontSize + 2 : fontSize, color: isWeekend ? Colors.white : null)), SizedBox(height: isMobile ? 6 : 4), Text(formattedDate, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: isWeekend ? Colors.white : (Theme.of(context).brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[700]), fontWeight: isWeekend ? FontWeight.w600 : FontWeight.normal, fontSize: isMobile ? fontSize : fontSize - 2)), SizedBox(height: isMobile ? 6 : 4), Wrap(spacing: 6, runSpacing: 6, children: holiday.types.map((type) { Color typeColor = Colors.grey; if (type.contains('Bancário')) typeColor = Colors.green; if (type.contains('Nacional')) typeColor = Colors.blue; if (type.contains('Estadual')) typeColor = Colors.purple; if (type.contains('Municipal')) typeColor = Colors.orange; return Container(padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 8, vertical: isMobile ? 6 : 4), decoration: BoxDecoration(color: isWeekend ? Colors.white.withValues(alpha: 0.2) : typeColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)), child: Text(type, style: TextStyle(fontSize: isMobile ? 13 : 11, color: isWeekend ? Colors.white : typeColor, fontWeight: FontWeight.w600))); }).toList()), if (holiday.specialNote != null) ...[SizedBox(height: isMobile ? 8 : 6), Container(padding: EdgeInsets.all(isMobile ? 10 : 8), decoration: BoxDecoration(color: isWeekend ? Colors.white.withValues(alpha: 0.2) : Colors.amber.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: isWeekend ? Colors.white.withValues(alpha: 0.3) : Colors.amber.withValues(alpha: 0.3), width: 1)), child: Row(children: [Icon(Icons.access_time, size: isMobile ? 18 : 16, color: isWeekend ? Colors.white : Colors.amber[800]), SizedBox(width: isMobile ? 8 : 6), Expanded(child: Text(holiday.specialNote!, style: TextStyle(fontSize: isMobile ? 13 : 11, color: isWeekend ? Colors.white : Colors.amber[900], fontWeight: FontWeight.w500))) ]))]])),
+                                            if (isWeekend) Container(padding: EdgeInsets.all(isMobile ? 10 : 8), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle), child: Icon(Icons.weekend, color: Colors.white, size: isMobile ? 24 : 20)),
                                           ],
                                         ),
                                       ),
