@@ -792,7 +792,28 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                     ),
                   ),
                   pw.SizedBox(height: 12),
-                  _buildAnnualCalendarGridPdf(_selectedYear, uniqueHolidaysMap),
+                  // Grid de 2 colunas com 6 linhas (2x6 = 12 meses)
+                  pw.Column(
+                    children: [
+                      for (int row = 0; row < 6; row++)
+                        pw.Row(
+                          children: [
+                            pw.Expanded(
+                              child: pw.Padding(
+                                padding: const pw.EdgeInsets.all(4),
+                                child: _buildMiniCalendarPdf(row * 2 + 1, _selectedYear, uniqueHolidaysMap),
+                              ),
+                            ),
+                            pw.Expanded(
+                              child: pw.Padding(
+                                padding: const pw.EdgeInsets.all(4),
+                                child: _buildMiniCalendarPdf(row * 2 + 2, _selectedYear, uniqueHolidaysMap),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
                   pw.SizedBox(height: 24),
                 ] else ...[
                   pw.Text(
@@ -1098,7 +1119,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                 return pw.Container(
                   padding: const pw.EdgeInsets.all(6),
                   decoration: pw.BoxDecoration(
-                    color: PdfColors.grey200,
+                    color: PdfColors.white,
                     border: pw.Border.all(color: PdfColors.black, width: 1),
                   ),
                   child: pw.Text(''),
@@ -1166,7 +1187,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
               return pw.Container(
                 padding: const pw.EdgeInsets.all(6),
                 decoration: pw.BoxDecoration(
-                  color: PdfColors.grey200,
+                  color: PdfColors.white,
                   border: pw.Border.all(color: PdfColors.black, width: 1),
                 ),
                 child: pw.Text(''),
@@ -1228,93 +1249,44 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     );
   }
 
-  pw.Widget _buildAnnualCalendarGridPdf(int year, Map<String, Holiday> holidayMap) {
-    final monthNames = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
-    final monthRows = <pw.Widget>[];
-
-    // Criar grid de 2x6 (2 colunas, 6 linhas) para 12 meses com mais espaço
-    for (int rowIdx = 0; rowIdx < 6; rowIdx++) {
-      final monthsInRow = <pw.Widget>[];
-
-      for (int colIdx = 0; colIdx < 2; colIdx++) {
-        final monthIdx = rowIdx * 2 + colIdx;
-        if (monthIdx < 12) {
-          final month = monthIdx + 1;
-          monthsInRow.add(
-            pw.Expanded(
-              child: pw.Container(
-                margin: const pw.EdgeInsets.all(8),
-                padding: const pw.EdgeInsets.all(12),
-                decoration: pw.BoxDecoration(
-                  border: pw.Border.all(color: PdfColors.black, width: 2),
-                  borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
-                ),
-                child: pw.Column(
-                  children: [
-                    // Cabeçalho do mês
-                    pw.Container(
-                      decoration: pw.BoxDecoration(
-                        color: PdfColors.blue,
-                        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
-                      ),
-                      padding: const pw.EdgeInsets.all(8),
-                      width: double.infinity,
-                      child: pw.Text(
-                        '${monthNames[monthIdx]} $year',
-                        style: pw.TextStyle(
-                          fontSize: 14,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.white,
-                        ),
-                        textAlign: pw.TextAlign.center,
-                      ),
-                    ),
-                    pw.SizedBox(height: 8),
-                    // Calendário do mês
-                    _buildMiniCalendarPdf(month, year, holidayMap),
-                  ],
-                ),
-              ),
-            ),
-          );
-        } else {
-          monthsInRow.add(pw.Expanded(child: pw.SizedBox()));
-        }
-      }
-
-      monthRows.add(
-        pw.Row(
-          children: monthsInRow,
-        ),
-      );
-      monthRows.add(pw.SizedBox(height: 8));
-    }
-
-    return pw.Column(
-      children: monthRows,
-    );
-  }
-
   pw.Widget _buildMiniCalendarPdf(int month, int year, Map<String, Holiday> holidayMap) {
     final firstDay = DateTime(year, month, 1);
     final lastDay = DateTime(year, month + 1, 0);
     final daysInMonth = lastDay.day;
     final weekdayStart = firstDay.weekday % 7;
+    final monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
     final dayHeaders = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
     final tableRows = <pw.TableRow>[];
 
+    // Cabeçalho com nome do mês
+    tableRows.add(
+      pw.TableRow(
+        decoration: pw.BoxDecoration(color: PdfColors.blue),
+        children: [
+          pw.Container(
+            padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+            child: pw.Text(
+              '${monthNames[month - 1]} $year',
+              style: pw.TextStyle(
+                fontSize: 9,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.white,
+              ),
+              textAlign: pw.TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+
     // Cabeçalho com dias da semana
     tableRows.add(
       pw.TableRow(
+        decoration: pw.BoxDecoration(color: PdfColors.grey),
         children: dayHeaders.map((dayHeader) {
-          final isWeekend = dayHeader == 'D' || dayHeader == 'S';
           return pw.Container(
-            padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-            decoration: pw.BoxDecoration(
-              color: isWeekend ? PdfColors.red : PdfColors.blue,
-              border: pw.Border.all(color: PdfColors.black, width: 0.5),
-            ),
+            padding: const pw.EdgeInsets.symmetric(vertical: 3, horizontal: 1),
             child: pw.Text(
               dayHeader,
               style: pw.TextStyle(
@@ -1332,12 +1304,12 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     // Montar as semanas
     List<String> currentWeek = [];
 
-    // Células vazias antes do primeiro dia
+    // Preencher dias vazios antes do primeiro dia
     for (int i = 0; i < weekdayStart; i++) {
       currentWeek.add('');
     }
 
-    // Dias do mês
+    // Preencher dias do mês
     for (int day = 1; day <= daysInMonth; day++) {
       currentWeek.add(day.toString());
 
@@ -1348,19 +1320,24 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
             children: currentWeek.map((dayStr) {
               if (dayStr.isEmpty) {
                 return pw.Container(
-                  padding: const pw.EdgeInsets.symmetric(vertical: 2, horizontal: 1),
-                  decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey300, width: 0.5)),
+                  padding: const pw.EdgeInsets.all(2),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.white,
+                    border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
+                  ),
+                  child: pw.Text(''),
                 );
               }
 
               final day = int.parse(dayStr);
               final dateStr = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
-              final isHoliday = holidayMap.containsKey(dateStr);
+              final holiday = holidayMap[dateStr];
+              final isHoliday = holiday != null;
               final date = DateTime(year, month, day);
               final isWeekend = date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
 
               return pw.Container(
-                padding: const pw.EdgeInsets.symmetric(vertical: 2, horizontal: 1),
+                padding: const pw.EdgeInsets.all(2),
                 decoration: pw.BoxDecoration(
                   color: isHoliday ? PdfColors.green : (isWeekend ? PdfColors.red100 : PdfColors.white),
                   border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
@@ -1368,9 +1345,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                 child: pw.Text(
                   day.toString(),
                   style: pw.TextStyle(
-                    fontSize: 6,
+                    fontSize: 8,
+                    fontWeight: pw.FontWeight.bold,
                     color: isHoliday ? PdfColors.white : (isWeekend ? PdfColors.white : PdfColors.black),
-                    fontWeight: isHoliday || isWeekend ? pw.FontWeight.bold : pw.FontWeight.normal,
                   ),
                   textAlign: pw.TextAlign.center,
                 ),
@@ -1393,32 +1370,34 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
           children: currentWeek.map((dayStr) {
             if (dayStr.isEmpty) {
               return pw.Container(
-                padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                padding: const pw.EdgeInsets.all(2),
                 decoration: pw.BoxDecoration(
-                  color: PdfColors.grey200,
-                  border: pw.Border.all(color: PdfColors.black, width: 0.5),
+                  color: PdfColors.white,
+                  border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
                 ),
+                child: pw.Text(''),
               );
             }
 
             final day = int.parse(dayStr);
             final dateStr = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
-            final isHoliday = holidayMap.containsKey(dateStr);
+            final holiday = holidayMap[dateStr];
+            final isHoliday = holiday != null;
             final date = DateTime(year, month, day);
             final isWeekend = date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
 
             return pw.Container(
-              padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+              padding: const pw.EdgeInsets.all(2),
               decoration: pw.BoxDecoration(
                 color: isHoliday ? PdfColors.green : (isWeekend ? PdfColors.red100 : PdfColors.white),
-                border: pw.Border.all(color: PdfColors.black, width: 0.5),
+                border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
               ),
               child: pw.Text(
                 day.toString(),
                 style: pw.TextStyle(
                   fontSize: 8,
+                  fontWeight: pw.FontWeight.bold,
                   color: isHoliday ? PdfColors.white : (isWeekend ? PdfColors.white : PdfColors.black),
-                  fontWeight: isHoliday || isWeekend ? pw.FontWeight.bold : pw.FontWeight.normal,
                 ),
                 textAlign: pw.TextAlign.center,
               ),
@@ -1430,6 +1409,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
 
     return pw.Table(
       border: pw.TableBorder.all(color: PdfColors.black, width: 0.5),
+      columnWidths: {
+        for (int i = 0; i < 7; i++) i: const pw.FlexColumnWidth(1),
+      },
       children: tableRows,
     );
   }
