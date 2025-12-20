@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -241,6 +243,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
   // Cache para "Próximo Feriado"
   ({String name, int daysUntil})? _cachedNextHoliday;
   DateTime? _cachedNextHolidayDate;
+
+  // GlobalKey para capturar screenshot do calendário mensal
+  final GlobalKey _calendarGridKey = GlobalKey();
 
   final List<int> availableYears = List.generate(11, (index) => DateTime.now().year - 5 + index);
 
@@ -730,8 +735,26 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     );
   }
 
+  Future<Uint8List?> _captureCalendarScreenshot() async {
+    try {
+      final RenderRepaintBoundary boundary = _calendarGridKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+      final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      return byteData?.buffer.asUint8List();
+    } catch (e) {
+      debugPrint('Erro ao capturar screenshot: $e');
+      return null;
+    }
+  }
+
   void _printReport() async {
     try {
+      // Capturar screenshot do calendário mensal se aplicável
+      Uint8List? calendarScreenshot;
+      if (_calendarType == 'mensal') {
+        calendarScreenshot = await _captureCalendarScreenshot();
+      }
+
       // Gerar PDF com o relatório completo
       final pdf = pw.Document();
 
@@ -783,7 +806,21 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                 pw.SizedBox(height: 20),
 
                 // Calendário - Mensal ou Anual
-                if (_calendarType == 'anual') ...[
+                if (_calendarType == 'mensal' && calendarScreenshot != null) ...[
+                  pw.Text(
+                    'CALENDÁRIO - ${_getMonthYearText()}',
+                    style: pw.TextStyle(
+                      fontSize: 13,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.SizedBox(height: 12),
+                  pw.Image(
+                    pw.MemoryImage(calendarScreenshot),
+                    width: 550,
+                  ),
+                  pw.SizedBox(height: 24),
+                ] else if (_calendarType == 'anual') ...[
                   pw.Text(
                     'CALENDÁRIO - $_selectedYear',
                     style: pw.TextStyle(
@@ -2522,7 +2559,10 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                   SizedBox(height: 16),
                   // CALENDÁRIO CONFORME TIPO SELECIONADO
                   if (_calendarType == 'mensal')
-                    _buildCalendarGrid()
+                    RepaintBoundary(
+                      key: _calendarGridKey,
+                      child: _buildCalendarGrid(),
+                    )
                   else if (_calendarType == 'semanal')
                     _buildWeeklyCalendar()
                   else if (_calendarType == 'anual')
