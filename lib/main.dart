@@ -1738,23 +1738,36 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                               child: InkWell(
                                 onTap: () async {
                                   try {
+                                    debugPrint('🔼 Clicou seta esquerda mês. Mês atual: $_calendarMonth, Ano: $_selectedYear');
+
                                     if (_calendarMonth == 1) {
+                                      debugPrint('🔼 Mudando de 1 para 12 (ano anterior)');
                                       _calendarMonth = 12;
                                       _selectedYear--;
                                     } else {
+                                      debugPrint('🔼 Mudando de $_calendarMonth para ${_calendarMonth - 1}');
                                       _calendarMonth--;
                                     }
+                                    debugPrint('🔼 Novo mês/ano: $_calendarMonth/$_selectedYear');
+
                                     // Carregar dados ANTES de chamar setState
+                                    debugPrint('🔼 Carregando feriados de $_selectedYear');
                                     final holidays = await _fetchHolidays(_selectedYear);
+                                    debugPrint('🔼 Carregados ${holidays.length} feriados');
 
                                     // Agora atualizar o estado com os dados já carregados
+                                    debugPrint('🔼 Chamando setState...');
                                     if (mounted) {
                                       setState(() {
+                                        debugPrint('🔼 Dentro do setState');
                                         _holidaysFuture = Future.value(holidays);
+                                        debugPrint('🔼 setState completo');
                                       });
                                     }
-                                  } catch (e) {
-                                    debugPrint('Erro na navegação: $e');
+                                    debugPrint('🔼 Navegação concluída com sucesso');
+                                  } catch (e, stackTrace) {
+                                    debugPrint('❌ ERRO na navegação: $e');
+                                    debugPrint('❌ Stack trace: $stackTrace');
                                   }
                                 },
                                 child: Icon(Icons.chevron_left, size: 24, color: Theme.of(context).colorScheme.primary),
@@ -1775,23 +1788,36 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                               child: InkWell(
                                 onTap: () async {
                                   try {
+                                    debugPrint('🔽 Clicou seta direita mês. Mês atual: $_calendarMonth, Ano: $_selectedYear');
+
                                     if (_calendarMonth == 12) {
+                                      debugPrint('🔽 Mudando de 12 para 1 (próximo ano)');
                                       _calendarMonth = 1;
                                       _selectedYear++;
                                     } else {
+                                      debugPrint('🔽 Mudando de $_calendarMonth para ${_calendarMonth + 1}');
                                       _calendarMonth++;
                                     }
+                                    debugPrint('🔽 Novo mês/ano: $_calendarMonth/$_selectedYear');
+
                                     // Carregar dados ANTES de chamar setState
+                                    debugPrint('🔽 Carregando feriados de $_selectedYear');
                                     final holidays = await _fetchHolidays(_selectedYear);
+                                    debugPrint('🔽 Carregados ${holidays.length} feriados');
 
                                     // Agora atualizar o estado com os dados já carregados
+                                    debugPrint('🔽 Chamando setState...');
                                     if (mounted) {
                                       setState(() {
+                                        debugPrint('🔽 Dentro do setState');
                                         _holidaysFuture = Future.value(holidays);
+                                        debugPrint('🔽 setState completo');
                                       });
                                     }
-                                  } catch (e) {
-                                    debugPrint('Erro na navegação: $e');
+                                    debugPrint('🔽 Navegação concluída com sucesso');
+                                  } catch (e, stackTrace) {
+                                    debugPrint('❌ ERRO na navegação: $e');
+                                    debugPrint('❌ Stack trace: $stackTrace');
                                   }
                                 },
                                 child: Icon(Icons.chevron_right, size: 24, color: Theme.of(context).colorScheme.primary),
