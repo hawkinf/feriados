@@ -422,76 +422,63 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
 
   Future<List<Holiday>> _fetchHolidays(int year) async {
     Map<String, Holiday> holidaysMap = {};
+    final Set<int> yearsToFetch = {year - 1, year, year + 1};
 
     try {
-      // Carregar feriados do ano atual
-      final uriNacional = Uri.parse('https://brasilapi.com.br/api/feriados/v1/$year');
+      for (final fetchYear in yearsToFetch) {
+        if (!availableYears.contains(fetchYear)) continue;
 
-      final response = await http.get(uriNacional).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw Exception('Timeout ao carregar feriados de $year');
-        }
-      );
+        final uri = Uri.parse('https://brasilapi.com.br/api/feriados/v1/$fetchYear');
+        final response = await http.get(uri).timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            debugPrint('Timeout ao carregar feriados de $fetchYear');
+            return http.Response('[]', 200); // Retorna vazio em caso de timeout
+          },
+        );
 
-      if (response.statusCode == 200) {
-        List jsonList = json.decode(response.body);
-        for (var json in jsonList) {
-          final holiday = Holiday.fromJson(json);
-          holidaysMap[holiday.date] = holiday;
-        }
-      } else {
-        throw Exception('Falha ao carregar feriados nacionais (status: ${response.statusCode}).');
-      }
-
-      // CARREGAR TAMBÉM FERIADOS DO PRÓXIMO ANO (para exibir em dezembro/janeiro)
-      final nextYear = year + 1;
-      final uriProximo = Uri.parse('https://brasilapi.com.br/api/feriados/v1/$nextYear');
-
-      final responseProximo = await http.get(uriProximo).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          return http.Response('[]', 200); // Retornar vazio em caso de timeout
-        }
-      );
-
-      if (responseProximo.statusCode == 200) {
-        List jsonList = json.decode(responseProximo.body);
-        for (var json in jsonList) {
-          final holiday = Holiday.fromJson(json);
-          // Adicionar apenas feriados de janeiro e fevereiro do próximo ano
-          final holidayDate = DateTime.parse(holiday.date);
-          if (holidayDate.month <= 2) {
-            holidaysMap[holiday.date] = holiday;
+        if (response.statusCode == 200) {
+          List jsonList = json.decode(response.body);
+          for (var json in jsonList) {
+            final holiday = Holiday.fromJson(json);
+            holidaysMap.putIfAbsent(holiday.date, () => holiday);
           }
+        } else {
+          debugPrint('Falha ao carregar feriados de $fetchYear (status: ${response.statusCode}).');
         }
       }
 
-      // Adicionar feriado bancário de último dia do ano
-      final lastDay = DateTime(year, 12, 31);
-      String specialNote = '';
-      if (lastDay.weekday == DateTime.saturday) {
-        specialNote = 'Bancos encerram às 11h na sexta-feira anterior (30/12)';
-      } else if (lastDay.weekday == DateTime.sunday) {
-        specialNote = 'Bancos encerram às 11h na sexta-feira anterior (29/12)';
-      } else {
-        specialNote = 'Bancos encerram às 11h';
-      }
-      final bancarioHoliday = Holiday(date: '$year-12-31', name: 'Véspera de Ano Novo', types: ['Bancário'], specialNote: specialNote);
-      if (holidaysMap.containsKey(bancarioHoliday.date)) {
-        holidaysMap[bancarioHoliday.date] = holidaysMap[bancarioHoliday.date]!.mergeWith(bancarioHoliday);
-      } else {
-        holidaysMap[bancarioHoliday.date] = bancarioHoliday;
-      }
-      
-      // Adicionar feriados municipais do ano selecionado
-      for (var holiday in _selectedCity.municipalHolidays) {
-        final dateCurrentYear = '$year${holiday['date']}';
-        final municipalHolidayCurrentYear = Holiday(date: dateCurrentYear, name: holiday['name']!, types: ['Municipal (${_selectedCity.name})']);
-        if (holidaysMap.containsKey(dateCurrentYear)) {
-          holidaysMap[dateCurrentYear] = holidaysMap[dateCurrentYear]!.mergeWith(municipalHolidayCurrentYear);
+      // Adicionar feriados especiais e municipais para todos os anos relevantes
+      for (final fetchYear in yearsToFetch) {
+        if (!availableYears.contains(fetchYear)) continue;
+
+        // Adicionar feriado bancário de último dia do ano
+        final lastDay = DateTime(fetchYear, 12, 31);
+        String specialNote = '';
+        if (lastDay.weekday == DateTime.saturday) {
+          specialNote = 'Bancos encerram às 11h na sexta-feira anterior (30/12)';
+        } else if (lastDay.weekday == DateTime.sunday) {
+          specialNote = 'Bancos encerram às 11h na sexta-feira anterior (29/12)';
         } else {
-          holidaysMap[dateCurrentYear] = municipalHolidayCurrentYear;
+          specialNote = 'Bancos encerram às 11h';
+        }
+        final bancarioHoliday = Holiday(date: '$fetchYear-12-31', name: 'Véspera de Ano Novo', types: ['Bancário'], specialNote: specialNote);
+        
+        if (holidaysMap.containsKey(bancarioHoliday.date)) {
+          holidaysMap[bancarioHoliday.date] = holidaysMap[bancarioHoliday.date]!.mergeWith(bancarioHoliday);
+        } else {
+          holidaysMap[bancarioHoliday.date] = bancarioHoliday;
+        }
+        
+        // Adicionar feriados municipais
+        for (var holiday in _selectedCity.municipalHolidays) {
+          final dateStr = '$fetchYear${holiday['date']}';
+          final municipalHoliday = Holiday(date: dateStr, name: holiday['name']!, types: ['Municipal (${_selectedCity.name})']);
+          if (holidaysMap.containsKey(dateStr)) {
+            holidaysMap[dateStr] = holidaysMap[dateStr]!.mergeWith(municipalHoliday);
+          } else {
+            holidaysMap[dateStr] = municipalHoliday;
+          }
         }
       }
       
@@ -1647,6 +1634,32 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     }
   }
 
+  void _nextMonth() {
+    if (!mounted) return;
+    setState(() {
+      if (_calendarMonth == 12) {
+        _calendarMonth = 1;
+        _selectedYear++;
+      } else {
+        _calendarMonth++;
+      }
+      _holidaysFuture = _fetchHolidays(_selectedYear);
+    });
+  }
+
+  void _previousMonth() {
+    if (!mounted) return;
+    setState(() {
+      if (_calendarMonth == 1) {
+        _calendarMonth = 12;
+        _selectedYear--;
+      } else {
+        _calendarMonth--;
+      }
+      _holidaysFuture = _fetchHolidays(_selectedYear);
+    });
+  }
+
   Widget _buildCalendarGrid() {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 800;
@@ -1740,20 +1753,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () {
-                                  if (_calendarMonth == 1) {
-                                    _calendarMonth = 12;
-                                    _selectedYear--;
-                                  } else {
-                                    _calendarMonth--;
-                                  }
-
-                                  if (mounted) {
-                                    setState(() {
-                                      _holidaysFuture = _fetchHolidays(_selectedYear);
-                                    });
-                                  }
-                                },
+                                onTap: _previousMonth,
                                 child: Icon(Icons.chevron_left, size: 24, color: Theme.of(context).colorScheme.primary),
                               ),
                             ),
@@ -1770,20 +1770,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () {
-                                  if (_calendarMonth == 12) {
-                                    _calendarMonth = 1;
-                                    _selectedYear++;
-                                  } else {
-                                    _calendarMonth++;
-                                  }
-
-                                  if (mounted) {
-                                    setState(() {
-                                      _holidaysFuture = _fetchHolidays(_selectedYear);
-                                    });
-                                  }
-                                },
+                                onTap: _nextMonth,
                                 child: Icon(Icons.chevron_right, size: 24, color: Theme.of(context).colorScheme.primary),
                               ),
                             ),
@@ -1797,12 +1784,10 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                               color: Colors.transparent,
                               child: InkWell(
                                 onTap: () {
-                                  _selectedYear--;
-                                  if (mounted) {
-                                    setState(() {
-                                      _holidaysFuture = _fetchHolidays(_selectedYear);
-                                    });
-                                  }
+                                  setState(() {
+                                    _selectedYear--;
+                                    _holidaysFuture = _fetchHolidays(_selectedYear);
+                                  });
                                 },
                                 child: Icon(Icons.chevron_left, size: 24, color: Theme.of(context).colorScheme.primary),
                               ),
@@ -1821,12 +1806,10 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                               color: Colors.transparent,
                               child: InkWell(
                                 onTap: () {
-                                  _selectedYear++;
-                                  if (mounted) {
-                                    setState(() {
-                                      _holidaysFuture = _fetchHolidays(_selectedYear);
-                                    });
-                                  }
+                                  setState(() {
+                                    _selectedYear++;
+                                    _holidaysFuture = _fetchHolidays(_selectedYear);
+                                  });
                                 },
                                 child: Icon(Icons.chevron_right, size: 24, color: Theme.of(context).colorScheme.primary),
                               ),
@@ -1858,31 +1841,11 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                         onHorizontalDragEnd: (details) {
                           // Swipe da direita para esquerda = próximo mês
                           if (details.primaryVelocity! < -500) {
-                            if (_calendarMonth == 12) {
-                              _calendarMonth = 1;
-                              _selectedYear++;
-                            } else {
-                              _calendarMonth++;
-                            }
-                            if (mounted) {
-                              setState(() {
-                                _holidaysFuture = _fetchHolidays(_selectedYear);
-                              });
-                            }
+                            _nextMonth();
                           }
                           // Swipe da esquerda para direita = mês anterior
                           else if (details.primaryVelocity! > 500) {
-                            if (_calendarMonth == 1) {
-                              _calendarMonth = 12;
-                              _selectedYear--;
-                            } else {
-                              _calendarMonth--;
-                            }
-                            if (mounted) {
-                              setState(() {
-                                _holidaysFuture = _fetchHolidays(_selectedYear);
-                              });
-                            }
+                            _previousMonth();
                           }
                         },
                         child: GridView.builder(
