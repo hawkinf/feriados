@@ -1670,84 +1670,80 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     final double headerFontSize = isMobile ? 18.0 : 20.0;
     final double titleFontSize = (fontSize - 1) * 2.2;
 
-    // Calcular mês anterior
-    int prevMonth = _calendarMonth == 1 ? 12 : _calendarMonth - 1;
-    int prevYear = _calendarMonth == 1 ? _selectedYear - 1 : _selectedYear;
+    // Calcular mês anterior - CAPTURAR OS VALORES CORRETOS AGORA
+    final int prevMonth = _calendarMonth == 1 ? 12 : _calendarMonth - 1;
+    final int prevYear = _calendarMonth == 1 ? _selectedYear - 1 : _selectedYear;
 
-    // Calcular próximo mês/ano
-    int nextMonth = _calendarMonth == 12 ? 1 : _calendarMonth + 1;
-    int nextYear = _calendarMonth == 12 ? _selectedYear + 1 : _selectedYear;
+    // Calcular próximo mês/ano - CAPTURAR OS VALORES CORRETOS AGORA
+    final int nextMonth = _calendarMonth == 12 ? 1 : _calendarMonth + 1;
+    final int nextYear = _calendarMonth == 12 ? _selectedYear + 1 : _selectedYear;
+
+    debugPrint('🏗️ CONSTRUINDO: mês=$_calendarMonth, ano=$_selectedYear, prev=$prevMonth/$prevYear, next=$nextMonth/$nextYear');
 
     final now = DateTime(_selectedYear, _calendarMonth, 1);
     final firstDayOfWeek = now.weekday % 7; // 0=domingo, 1=segunda, ..., 6=sábado
     // Último dia do mês atual
     final daysInMonth = DateTime(_calendarMonth == 12 ? _selectedYear + 1 : _selectedYear, _calendarMonth == 12 ? 1 : _calendarMonth + 1, 0).day;
     final prevMonthDays = DateTime(_selectedYear, _calendarMonth, 0).day;
-    
+
     final monthName = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'][_calendarMonth - 1];
-    
+
     final today = DateTime.now();
     final isCurrentMonth = today.year == _selectedYear && today.month == _calendarMonth;
     final todayDay = isCurrentMonth ? today.day : -1;
-    
+
     final List<String> dayHeaders = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
     List<({int day, int month, int year, bool isCurrentMonth})> calendarDays = [];
-    
+
     // Dias do mês anterior (apenas os necessários para preencher o inicio da primeira semana)
     for (int i = prevMonthDays - firstDayOfWeek + 1; i <= prevMonthDays; i++) {
       calendarDays.add((day: i, month: prevMonth, year: prevYear, isCurrentMonth: false));
     }
-    
+
     // Dias do mês atual
     for (int i = 1; i <= daysInMonth; i++) {
       calendarDays.add((day: i, month: _calendarMonth, year: _selectedYear, isCurrentMonth: true));
     }
-    
+
     // Dias do próximo mês para completar o grid
     int remainingCells = (7 - (calendarDays.length % 7)) % 7;
     for (int i = 1; i <= remainingCells; i++) {
       calendarDays.add((day: i, month: nextMonth, year: nextYear, isCurrentMonth: false));
     }
-    
+
     return FutureBuilder<List<Holiday>>(
       future: _holidaysFuture,
       builder: (context, snapshot) {
         Map<String, String> holidayNames = {};
         Set<String> holidayDays = {};
-        
-        debugPrint('=== Calendário Debug ===');
-        debugPrint('Mês selecionado: $_calendarMonth, Ano: $_selectedYear');
-        debugPrint('Mês anterior: $prevMonth/$prevYear');
-        debugPrint('Próximo mês: $nextMonth/$nextYear');
-        debugPrint('Dados do snapshot: ${snapshot.hasData}');
-        
+
+        // IMPORTANTE: Usar os valores CAPTURADOS acima, não recalcular!
+        debugPrint('🏗️ BUILDER: snapshot.hasData=${snapshot.hasData}, mês=$_calendarMonth, ano=$_selectedYear');
+
         if (snapshot.hasData) {
-          debugPrint('Total de feriados carregados: ${snapshot.data!.length}');
+          debugPrint('🏗️ BUILDER: Processando ${snapshot.data!.length} feriados');
           for (final holiday in snapshot.data!) {
             try {
               final holidayDate = DateTime.parse(holiday.date);
               final key = '${holidayDate.year}-${holidayDate.month.toString().padLeft(2, '0')}-${holidayDate.day.toString().padLeft(2, '0')}';
-              debugPrint('Processando feriado: ${holiday.name} em ${holiday.date} (key: $key)');
-              
-              // Verificar se é do mês atual, anterior ou próximo
+
+              // Verificar se é do mês atual, anterior ou próximo - USAR OS VALORES CAPTURADOS
               if ((holidayDate.month == _calendarMonth && holidayDate.year == _selectedYear) ||
                   (holidayDate.month == prevMonth && holidayDate.year == prevYear) ||
                   (holidayDate.month == nextMonth && holidayDate.year == nextYear)) {
-                debugPrint('✓ Feriado ADICIONADO: ${holiday.name}');
+                debugPrint('🏗️ ADICIONADO: $key - ${holiday.name}');
                 holidayDays.add(key);
                 holidayNames[key] = holiday.name;
-              } else {
-                debugPrint('✗ Feriado IGNORADO: ${holiday.name}');
               }
             } catch (e) {
-              debugPrint('Erro ao parsear feriado: ${holiday.date} - $e');
+              debugPrint('🏗️ ERRO parseando: ${holiday.date}');
             }
           }
-          debugPrint('Total de feriados para este mês: ${holidayDays.length}');
+          debugPrint('🏗️ TOTAL: ${holidayDays.length} feriados para exibir');
         } else if (snapshot.hasError) {
-          debugPrint('ERRO ao carregar feriados: ${snapshot.error}');
+          debugPrint('🏗️ ERRO: ${snapshot.error}');
         } else {
-          debugPrint('Carregando feriados...');
+          debugPrint('🏗️ AGUARDANDO dados...');
         }
         
         return Padding(
