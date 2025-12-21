@@ -1718,9 +1718,10 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
             }
           }
         } else if (snapshot.hasError) {
-          // Erro ao carregar
+          // Erro ao carregar - retornar calendário vazio
+          debugPrint('FutureBuilder Error: ${snapshot.error}');
         } else {
-          // Aguardando dados
+          // Aguardando dados - renderizar com calendário vazio
         }
         
         return Padding(
