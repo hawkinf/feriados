@@ -1736,17 +1736,26 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () {
-                                  if (_calendarMonth == 1) {
-                                    _calendarMonth = 12;
-                                    _selectedYear--;
-                                  } else {
-                                    _calendarMonth--;
+                                onTap: () async {
+                                  try {
+                                    if (_calendarMonth == 1) {
+                                      _calendarMonth = 12;
+                                      _selectedYear--;
+                                    } else {
+                                      _calendarMonth--;
+                                    }
+                                    // Carregar dados ANTES de chamar setState
+                                    final holidays = await _fetchHolidays(_selectedYear);
+
+                                    // Agora atualizar o estado com os dados já carregados
+                                    if (mounted) {
+                                      setState(() {
+                                        _holidaysFuture = Future.value(holidays);
+                                      });
+                                    }
+                                  } catch (e) {
+                                    debugPrint('Erro na navegação: $e');
                                   }
-                                  _holidaysFuture = _fetchHolidays(_selectedYear);
-                                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                                    if (mounted) setState(() {});
-                                  });
                                 },
                                 child: Icon(Icons.chevron_left, size: 24, color: Theme.of(context).colorScheme.primary),
                               ),
@@ -1764,17 +1773,26 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () {
-                                  if (_calendarMonth == 12) {
-                                    _calendarMonth = 1;
-                                    _selectedYear++;
-                                  } else {
-                                    _calendarMonth++;
+                                onTap: () async {
+                                  try {
+                                    if (_calendarMonth == 12) {
+                                      _calendarMonth = 1;
+                                      _selectedYear++;
+                                    } else {
+                                      _calendarMonth++;
+                                    }
+                                    // Carregar dados ANTES de chamar setState
+                                    final holidays = await _fetchHolidays(_selectedYear);
+
+                                    // Agora atualizar o estado com os dados já carregados
+                                    if (mounted) {
+                                      setState(() {
+                                        _holidaysFuture = Future.value(holidays);
+                                      });
+                                    }
+                                  } catch (e) {
+                                    debugPrint('Erro na navegação: $e');
                                   }
-                                  _holidaysFuture = _fetchHolidays(_selectedYear);
-                                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                                    if (mounted) setState(() {});
-                                  });
                                 },
                                 child: Icon(Icons.chevron_right, size: 24, color: Theme.of(context).colorScheme.primary),
                               ),
@@ -1788,12 +1806,18 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () {
-                                  _selectedYear--;
-                                  _holidaysFuture = _fetchHolidays(_selectedYear);
-                                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                                    if (mounted) setState(() {});
-                                  });
+                                onTap: () async {
+                                  try {
+                                    _selectedYear--;
+                                    final holidays = await _fetchHolidays(_selectedYear);
+                                    if (mounted) {
+                                      setState(() {
+                                        _holidaysFuture = Future.value(holidays);
+                                      });
+                                    }
+                                  } catch (e) {
+                                    debugPrint('Erro na navegação: $e');
+                                  }
                                 },
                                 child: Icon(Icons.chevron_left, size: 24, color: Theme.of(context).colorScheme.primary),
                               ),
@@ -1811,12 +1835,18 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () {
-                                  _selectedYear++;
-                                  _holidaysFuture = _fetchHolidays(_selectedYear);
-                                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                                    if (mounted) setState(() {});
-                                  });
+                                onTap: () async {
+                                  try {
+                                    _selectedYear++;
+                                    final holidays = await _fetchHolidays(_selectedYear);
+                                    if (mounted) {
+                                      setState(() {
+                                        _holidaysFuture = Future.value(holidays);
+                                      });
+                                    }
+                                  } catch (e) {
+                                    debugPrint('Erro na navegação: $e');
+                                  }
                                 },
                                 child: Icon(Icons.chevron_right, size: 24, color: Theme.of(context).colorScheme.primary),
                               ),
@@ -1845,32 +1875,40 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                       const SizedBox(height: 0.3),
                       // GRID DO CALENDÁRIO COM GESTOS DE SWIPE
                       GestureDetector(
-                        onHorizontalDragEnd: (details) {
-                          // Swipe da direita para esquerda = próximo mês
-                          if (details.primaryVelocity! < -500) {
-                            if (_calendarMonth == 12) {
-                              _calendarMonth = 1;
-                              _selectedYear++;
-                            } else {
-                              _calendarMonth++;
+                        onHorizontalDragEnd: (details) async {
+                          try {
+                            // Swipe da direita para esquerda = próximo mês
+                            if (details.primaryVelocity! < -500) {
+                              if (_calendarMonth == 12) {
+                                _calendarMonth = 1;
+                                _selectedYear++;
+                              } else {
+                                _calendarMonth++;
+                              }
+                              final holidays = await _fetchHolidays(_selectedYear);
+                              if (mounted) {
+                                setState(() {
+                                  _holidaysFuture = Future.value(holidays);
+                                });
+                              }
                             }
-                            _holidaysFuture = _fetchHolidays(_selectedYear);
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (mounted) setState(() {});
-                            });
-                          }
-                          // Swipe da esquerda para direita = mês anterior
-                          else if (details.primaryVelocity! > 500) {
-                            if (_calendarMonth == 1) {
-                              _calendarMonth = 12;
-                              _selectedYear--;
-                            } else {
-                              _calendarMonth--;
+                            // Swipe da esquerda para direita = mês anterior
+                            else if (details.primaryVelocity! > 500) {
+                              if (_calendarMonth == 1) {
+                                _calendarMonth = 12;
+                                _selectedYear--;
+                              } else {
+                                _calendarMonth--;
+                              }
+                              final holidays = await _fetchHolidays(_selectedYear);
+                              if (mounted) {
+                                setState(() {
+                                  _holidaysFuture = Future.value(holidays);
+                                });
+                              }
                             }
-                            _holidaysFuture = _fetchHolidays(_selectedYear);
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (mounted) setState(() {});
-                            });
+                          } catch (e) {
+                            debugPrint('Erro no swipe: $e');
                           }
                         },
                         child: GridView.builder(
