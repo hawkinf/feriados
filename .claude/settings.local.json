@@ -11,7 +11,9 @@
       "Bash(git commit:*)",
       "Bash(flutter analyze:*)",
       "Bash(flutter build:*)",
-      "Bash(flutter pub get:*)"
+      "Bash(flutter pub get:*)",
+      "Bash(flutter logs:*)",
+      "Bash(flutter run:*)"
     ]
   }
 }

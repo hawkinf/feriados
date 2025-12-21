@@ -2643,90 +2643,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                   else if (_calendarType == 'anual')
                     _buildAnnualCalendar(),
                   SizedBox(height: isMobile ? 28 : 24),
-                  FutureBuilder<List<Holiday>>(
-                    future: _holidaysFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: Padding(padding: const EdgeInsets.all(40.0), child: Column(children: [CircularProgressIndicator(color: Theme.of(context).colorScheme.primary), const SizedBox(height: 16), Text('Carregando feriados...', style: TextStyle(color: Colors.grey[600], fontSize: fontSize))])));
-                      } else if (snapshot.hasError) {
-                        return Center(child: Padding(padding: const EdgeInsets.all(40.0), child: Column(children: [Icon(Icons.error_outline, size: 48, color: Colors.red[300]), const SizedBox(height: 16), Text('Erro ao carregar feriados', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: fontSize), textAlign: TextAlign.center), const SizedBox(height: 8), Text('${snapshot.error}', style: TextStyle(color: Colors.grey[600], fontSize: fontSize - 4), textAlign: TextAlign.center)])));
-                      } else if (snapshot.hasData) {
-                        final holidays = snapshot.data!;
-                        if (holidays.isEmpty) return Center(child: Padding(padding: const EdgeInsets.all(40.0), child: Column(children: [Icon(Icons.event_busy, size: 48, color: Colors.grey[400]), const SizedBox(height: 16), Text('Nenhum feriado encontrado', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: fontSize))])));
-
-                        // Filtra apenas feriados do ano selecionado
-                        final holidaysCurrentYear = holidays.where((h) {
-                          try {
-                            final year = DateTime.parse(h.date).year;
-                            return year == _selectedYear;
-                          } catch (e) {
-                            return false;
-                          }
-                        }).toList();
-
-                        // Deduplica feriados por data
-                        final Map<String, Holiday> uniqueHolidaysMap = {};
-                        for (var holiday in holidaysCurrentYear) {
-                          if (!uniqueHolidaysMap.containsKey(holiday.date)) {
-                            uniqueHolidaysMap[holiday.date] = holiday;
-                          }
-                        }
-                        final uniqueHolidays = uniqueHolidaysMap.values.toList();
-
-                        final stats = _calculateStats(holidaysCurrentYear);
-                        return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildMainStatsSummary(stats, fontSize), // ESTATISTICAS NA TELA PRINCIPAL (LIMPO E COLORIDO)
-                              Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: Row(children: [Icon(Icons.event_note, color: Theme.of(context).colorScheme.primary, size: isMobile ? 28 : 24), const SizedBox(width: 8), Expanded(child: Text('Lista de Feriados de $_selectedYear', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: fontSize + 4)))])),
-                              SizedBox(height: isMobile ? 16 : 12),
-                              ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: uniqueHolidays.length,
-                                itemBuilder: (context, index) {
-                                  final holiday = uniqueHolidays[index];
-                                  final formattedDate = _formatDate(holiday.date);
-                                  bool isWeekend = false;
-                                  try { isWeekend = (DateFormat('yyyy-MM-dd').parse(holiday.date).weekday == DateTime.saturday || DateFormat('yyyy-MM-dd').parse(holiday.date).weekday == DateTime.sunday); } catch (e) {
-                                    // Ignorar erro na análise de fim de semana
-                                  }
-                                  return Card(
-                                    elevation: 1,
-                                    color: null,
-                                    margin: EdgeInsets.only(bottom: isMobile ? 12 : 8),
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(16),
-                                      onTap: () { HapticFeedback.lightImpact(); },
-                                      child: Padding(
-                                        padding: EdgeInsets.all(isMobile ? 18 : 16),
-                                        child: Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Column(children: holiday.types.map((type) {
-                                              Color typeColor = Colors.grey;
-                                              if (type.contains('Bancário')) typeColor = Colors.teal;
-                                              if (type.contains('Nacional')) typeColor = Colors.blue;
-                                              if (type.contains('Estadual')) typeColor = Colors.purple;
-                                              if (type.contains('Municipal')) typeColor = Colors.orange;
-                                              return Container(margin: const EdgeInsets.only(bottom: 8), padding: EdgeInsets.all(isMobile ? 14 : 12), decoration: BoxDecoration(color: isWeekend ? Colors.red[100] : typeColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.event, color: isWeekend ? Colors.red : typeColor, size: isMobile ? 28 : 24));
-                                            }).toList()),
-                                            SizedBox(width: isMobile ? 18 : 16),
-                                            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(holiday.name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: isMobile ? fontSize + 2 : fontSize)), SizedBox(height: isMobile ? 6 : 4), Text(formattedDate, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[700], fontSize: isMobile ? fontSize : fontSize - 2)), SizedBox(height: isMobile ? 6 : 4), Wrap(spacing: 6, runSpacing: 6, children: holiday.types.map((type) { Color typeColor = Colors.grey; if (type.contains('Bancário')) typeColor = Colors.teal; if (type.contains('Nacional')) typeColor = Colors.blue; if (type.contains('Estadual')) typeColor = Colors.purple; if (type.contains('Municipal')) typeColor = Colors.orange; return Container(padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 8, vertical: isMobile ? 6 : 4), decoration: BoxDecoration(color: isWeekend ? Colors.red[50] : typeColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)), child: Text(type, style: TextStyle(fontSize: isMobile ? 13 : 11, color: isWeekend ? Colors.red : typeColor, fontWeight: FontWeight.w600))); }).toList()), if (holiday.specialNote != null) ...[SizedBox(height: isMobile ? 8 : 6), Container(padding: EdgeInsets.all(isMobile ? 10 : 8), decoration: BoxDecoration(color: isWeekend ? Colors.red[50] : Colors.amber.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: isWeekend ? Colors.red[200]! : Colors.amber.withValues(alpha: 0.3), width: 1)), child: Row(children: [Icon(Icons.access_time, size: isMobile ? 18 : 16, color: isWeekend ? Colors.red : Colors.amber[800]), SizedBox(width: isMobile ? 8 : 6), Expanded(child: Text(holiday.specialNote!, style: TextStyle(fontSize: isMobile ? 13 : 11, color: isWeekend ? Colors.red[900] : Colors.amber[900], fontWeight: FontWeight.w500))) ]))]])),
-                                            if (isWeekend) Container(padding: EdgeInsets.all(isMobile ? 10 : 8), decoration: BoxDecoration(color: Colors.red[50], shape: BoxShape.circle), child: Icon(Icons.weekend, color: Colors.red, size: isMobile ? 24 : 20)),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                          );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
+                  // Nota: A lista de feriados abaixo não é mostrada para evitar conflito com o FutureBuilder do calendário
+                  // O calendário já exibe a informação de feriados
+                  const SizedBox.shrink(),
                   SizedBox(height: isMobile ? 28 : 24),
                 ],
               ),
