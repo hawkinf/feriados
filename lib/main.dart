@@ -423,51 +423,40 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
   Future<List<Holiday>> _fetchHolidays(int year) async {
     Map<String, Holiday> holidaysMap = {};
 
-    debugPrint('📅 _fetchHolidays: Tentando carregar feriados do ano $year');
-
     try {
       // Carregar feriados do ano atual
       final uriNacional = Uri.parse('https://brasilapi.com.br/api/feriados/v1/$year');
-      debugPrint('📅 _fetchHolidays: URL = $uriNacional');
 
       final response = await http.get(uriNacional).timeout(
         const Duration(seconds: 10),
         onTimeout: () {
-          debugPrint('❌ _fetchHolidays: TIMEOUT ao carregar $year');
           throw Exception('Timeout ao carregar feriados de $year');
         }
       );
 
-      debugPrint('📅 _fetchHolidays: Status code = ${response.statusCode}');
-
       if (response.statusCode == 200) {
         List jsonList = json.decode(response.body);
-        debugPrint('📅 _fetchHolidays: Carregados ${jsonList.length} feriados de $year');
         for (var json in jsonList) {
           final holiday = Holiday.fromJson(json);
           holidaysMap[holiday.date] = holiday;
         }
       } else {
-        debugPrint('❌ _fetchHolidays: Erro HTTP ${response.statusCode}');
         throw Exception('Falha ao carregar feriados nacionais (status: ${response.statusCode}).');
       }
-      
+
       // CARREGAR TAMBÉM FERIADOS DO PRÓXIMO ANO (para exibir em dezembro/janeiro)
       final nextYear = year + 1;
       final uriProximo = Uri.parse('https://brasilapi.com.br/api/feriados/v1/$nextYear');
-      debugPrint('📅 _fetchHolidays: Carregando próximo ano ($nextYear)');
 
       final responseProximo = await http.get(uriProximo).timeout(
         const Duration(seconds: 10),
         onTimeout: () {
-          debugPrint('❌ _fetchHolidays: TIMEOUT ao carregar $nextYear');
           return http.Response('[]', 200); // Retornar vazio em caso de timeout
         }
       );
 
       if (responseProximo.statusCode == 200) {
         List jsonList = json.decode(responseProximo.body);
-        debugPrint('📅 _fetchHolidays: Carregados ${jsonList.length} feriados de $nextYear');
         for (var json in jsonList) {
           final holiday = Holiday.fromJson(json);
           // Adicionar apenas feriados de janeiro e fevereiro do próximo ano
@@ -476,8 +465,6 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
             holidaysMap[holiday.date] = holiday;
           }
         }
-      } else {
-        debugPrint('⚠️ _fetchHolidays: Sem dados do próximo ano ($nextYear)');
       }
 
       // Adicionar feriado bancário de último dia do ano
@@ -510,11 +497,8 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
       
       final allHolidays = holidaysMap.values.toList();
       allHolidays.sort((a, b) => a.date.compareTo(b.date));
-      debugPrint('📅 _fetchHolidays: ✅ Retornando ${allHolidays.length} feriados para $year');
       return allHolidays;
-    } catch (e, stackTrace) {
-      debugPrint('❌ _fetchHolidays: ERRO - $e');
-      debugPrint('❌ _fetchHolidays: Stack - $stackTrace');
+    } catch (e) {
       throw Exception('Erro de conexão ou dados: $e');
     }
   }
@@ -1678,7 +1662,6 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
     final int nextMonth = _calendarMonth == 12 ? 1 : _calendarMonth + 1;
     final int nextYear = _calendarMonth == 12 ? _selectedYear + 1 : _selectedYear;
 
-    debugPrint('🏗️ CONSTRUINDO: mês=$_calendarMonth, ano=$_selectedYear, prev=$prevMonth/$prevYear, next=$nextMonth/$nextYear');
 
     final now = DateTime(_selectedYear, _calendarMonth, 1);
     final firstDayOfWeek = now.weekday % 7; // 0=domingo, 1=segunda, ..., 6=sábado
@@ -1717,11 +1700,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
         Map<String, String> holidayNames = {};
         Set<String> holidayDays = {};
 
-        // IMPORTANTE: Usar os valores CAPTURADOS acima, não recalcular!
-        debugPrint('🏗️ BUILDER: snapshot.hasData=${snapshot.hasData}, mês=$_calendarMonth, ano=$_selectedYear');
-
         if (snapshot.hasData) {
-          debugPrint('🏗️ BUILDER: Processando ${snapshot.data!.length} feriados');
           for (final holiday in snapshot.data!) {
             try {
               final holidayDate = DateTime.parse(holiday.date);
@@ -1731,19 +1710,17 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
               if ((holidayDate.month == _calendarMonth && holidayDate.year == _selectedYear) ||
                   (holidayDate.month == prevMonth && holidayDate.year == prevYear) ||
                   (holidayDate.month == nextMonth && holidayDate.year == nextYear)) {
-                debugPrint('🏗️ ADICIONADO: $key - ${holiday.name}');
                 holidayDays.add(key);
                 holidayNames[key] = holiday.name;
               }
             } catch (e) {
-              debugPrint('🏗️ ERRO parseando: ${holiday.date}');
+              // Ignorar erros de parse
             }
           }
-          debugPrint('🏗️ TOTAL: ${holidayDays.length} feriados para exibir');
         } else if (snapshot.hasError) {
-          debugPrint('🏗️ ERRO: ${snapshot.error}');
+          // Erro ao carregar
         } else {
-          debugPrint('🏗️ AGUARDANDO dados...');
+          // Aguardando dados
         }
         
         return Padding(
@@ -1763,30 +1740,20 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                               color: Colors.transparent,
                               child: InkWell(
                                 onTap: () async {
-                                  debugPrint('🔼 CLIQUE: Seta esquerda mês. Mês: $_calendarMonth, Ano: $_selectedYear');
-
                                   if (_calendarMonth == 1) {
-                                    debugPrint('🔼 ACAO: Mudando de janeiro para dezembro (ano -1)');
                                     _calendarMonth = 12;
                                     _selectedYear--;
                                   } else {
-                                    debugPrint('🔼 ACAO: Mudando para mês anterior');
                                     _calendarMonth--;
                                   }
-                                  debugPrint('🔼 RESULTADO: Novo mês/ano: $_calendarMonth/$_selectedYear');
 
-                                  debugPrint('🔼 API: Carregando feriados de $_selectedYear');
                                   final holidays = await _fetchHolidays(_selectedYear);
-                                  debugPrint('🔼 API: Carregados ${holidays.length} feriados');
 
-                                  debugPrint('🔼 STATE: Chamando setState...');
                                   if (mounted) {
                                     setState(() {
-                                      debugPrint('🔼 STATE: Dentro do setState');
                                       _holidaysFuture = Future.value(holidays);
                                     });
                                   }
-                                  debugPrint('🔼 SUCESSO: Navegação completa!');
                                 },
                                 child: Icon(Icons.chevron_left, size: 24, color: Theme.of(context).colorScheme.primary),
                               ),
@@ -1805,30 +1772,20 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                               color: Colors.transparent,
                               child: InkWell(
                                 onTap: () async {
-                                  debugPrint('🔽 CLIQUE: Seta direita mês. Mês: $_calendarMonth, Ano: $_selectedYear');
-
                                   if (_calendarMonth == 12) {
-                                    debugPrint('🔽 ACAO: Mudando de dezembro para janeiro (ano +1)');
                                     _calendarMonth = 1;
                                     _selectedYear++;
                                   } else {
-                                    debugPrint('🔽 ACAO: Mudando para próximo mês');
                                     _calendarMonth++;
                                   }
-                                  debugPrint('🔽 RESULTADO: Novo mês/ano: $_calendarMonth/$_selectedYear');
 
-                                  debugPrint('🔽 API: Carregando feriados de $_selectedYear');
                                   final holidays = await _fetchHolidays(_selectedYear);
-                                  debugPrint('🔽 API: Carregados ${holidays.length} feriados');
 
-                                  debugPrint('🔽 STATE: Chamando setState...');
                                   if (mounted) {
                                     setState(() {
-                                      debugPrint('🔽 STATE: Dentro do setState');
                                       _holidaysFuture = Future.value(holidays);
                                     });
                                   }
-                                  debugPrint('🔽 SUCESSO: Navegação completa!');
                                 },
                                 child: Icon(Icons.chevron_right, size: 24, color: Theme.of(context).colorScheme.primary),
                               ),
