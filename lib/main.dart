@@ -1739,7 +1739,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () async {
+                                onTap: () {
                                   if (_calendarMonth == 1) {
                                     _calendarMonth = 12;
                                     _selectedYear--;
@@ -1747,11 +1747,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                     _calendarMonth--;
                                   }
 
-                                  final holidays = await _fetchHolidays(_selectedYear);
-
                                   if (mounted) {
                                     setState(() {
-                                      _holidaysFuture = Future.value(holidays);
+                                      _holidaysFuture = _fetchHolidays(_selectedYear);
                                     });
                                   }
                                 },
@@ -1771,7 +1769,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () async {
+                                onTap: () {
                                   if (_calendarMonth == 12) {
                                     _calendarMonth = 1;
                                     _selectedYear++;
@@ -1779,11 +1777,9 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                     _calendarMonth++;
                                   }
 
-                                  final holidays = await _fetchHolidays(_selectedYear);
-
                                   if (mounted) {
                                     setState(() {
-                                      _holidaysFuture = Future.value(holidays);
+                                      _holidaysFuture = _fetchHolidays(_selectedYear);
                                     });
                                   }
                                 },
@@ -1799,17 +1795,12 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () async {
-                                  try {
-                                    _selectedYear--;
-                                    final holidays = await _fetchHolidays(_selectedYear);
-                                    if (mounted) {
-                                      setState(() {
-                                        _holidaysFuture = Future.value(holidays);
-                                      });
-                                    }
-                                  } catch (e) {
-                                    debugPrint('Erro na navegação: $e');
+                                onTap: () {
+                                  _selectedYear--;
+                                  if (mounted) {
+                                    setState(() {
+                                      _holidaysFuture = _fetchHolidays(_selectedYear);
+                                    });
                                   }
                                 },
                                 child: Icon(Icons.chevron_left, size: 24, color: Theme.of(context).colorScheme.primary),
@@ -1828,17 +1819,12 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () async {
-                                  try {
-                                    _selectedYear++;
-                                    final holidays = await _fetchHolidays(_selectedYear);
-                                    if (mounted) {
-                                      setState(() {
-                                        _holidaysFuture = Future.value(holidays);
-                                      });
-                                    }
-                                  } catch (e) {
-                                    debugPrint('Erro na navegação: $e');
+                                onTap: () {
+                                  _selectedYear++;
+                                  if (mounted) {
+                                    setState(() {
+                                      _holidaysFuture = _fetchHolidays(_selectedYear);
+                                    });
                                   }
                                 },
                                 child: Icon(Icons.chevron_right, size: 24, color: Theme.of(context).colorScheme.primary),
@@ -1868,40 +1854,34 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                       const SizedBox(height: 0.3),
                       // GRID DO CALENDÁRIO COM GESTOS DE SWIPE
                       GestureDetector(
-                        onHorizontalDragEnd: (details) async {
-                          try {
-                            // Swipe da direita para esquerda = próximo mês
-                            if (details.primaryVelocity! < -500) {
-                              if (_calendarMonth == 12) {
-                                _calendarMonth = 1;
-                                _selectedYear++;
-                              } else {
-                                _calendarMonth++;
-                              }
-                              final holidays = await _fetchHolidays(_selectedYear);
-                              if (mounted) {
-                                setState(() {
-                                  _holidaysFuture = Future.value(holidays);
-                                });
-                              }
+                        onHorizontalDragEnd: (details) {
+                          // Swipe da direita para esquerda = próximo mês
+                          if (details.primaryVelocity! < -500) {
+                            if (_calendarMonth == 12) {
+                              _calendarMonth = 1;
+                              _selectedYear++;
+                            } else {
+                              _calendarMonth++;
                             }
-                            // Swipe da esquerda para direita = mês anterior
-                            else if (details.primaryVelocity! > 500) {
-                              if (_calendarMonth == 1) {
-                                _calendarMonth = 12;
-                                _selectedYear--;
-                              } else {
-                                _calendarMonth--;
-                              }
-                              final holidays = await _fetchHolidays(_selectedYear);
-                              if (mounted) {
-                                setState(() {
-                                  _holidaysFuture = Future.value(holidays);
-                                });
-                              }
+                            if (mounted) {
+                              setState(() {
+                                _holidaysFuture = _fetchHolidays(_selectedYear);
+                              });
                             }
-                          } catch (e) {
-                            debugPrint('Erro no swipe: $e');
+                          }
+                          // Swipe da esquerda para direita = mês anterior
+                          else if (details.primaryVelocity! > 500) {
+                            if (_calendarMonth == 1) {
+                              _calendarMonth = 12;
+                              _selectedYear--;
+                            } else {
+                              _calendarMonth--;
+                            }
+                            if (mounted) {
+                              setState(() {
+                                _holidaysFuture = _fetchHolidays(_selectedYear);
+                              });
+                            }
                           }
                         },
                         child: GridView.builder(
