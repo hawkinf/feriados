@@ -1744,7 +1744,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                     _calendarMonth--;
                                   }
                                   _holidaysFuture = _fetchHolidays(_selectedYear);
-                                  Future.delayed(Duration.zero, () {
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
                                     if (mounted) setState(() {});
                                   });
                                 },
@@ -1772,7 +1772,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                     _calendarMonth++;
                                   }
                                   _holidaysFuture = _fetchHolidays(_selectedYear);
-                                  Future.delayed(Duration.zero, () {
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
                                     if (mounted) setState(() {});
                                   });
                                 },
@@ -1791,7 +1791,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                 onTap: () {
                                   _selectedYear--;
                                   _holidaysFuture = _fetchHolidays(_selectedYear);
-                                  Future.delayed(Duration.zero, () {
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
                                     if (mounted) setState(() {});
                                   });
                                 },
@@ -1814,7 +1814,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                                 onTap: () {
                                   _selectedYear++;
                                   _holidaysFuture = _fetchHolidays(_selectedYear);
-                                  Future.delayed(Duration.zero, () {
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
                                     if (mounted) setState(() {});
                                   });
                                 },
@@ -1855,7 +1855,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                               _calendarMonth++;
                             }
                             _holidaysFuture = _fetchHolidays(_selectedYear);
-                            Future.delayed(Duration.zero, () {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
                               if (mounted) setState(() {});
                             });
                           }
@@ -1868,7 +1868,7 @@ class _HolidayScreenState extends State<HolidayScreen> with SingleTickerProvider
                               _calendarMonth--;
                             }
                             _holidaysFuture = _fetchHolidays(_selectedYear);
-                            Future.delayed(Duration.zero, () {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
                               if (mounted) setState(() {});
                             });
                           }
