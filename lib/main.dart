@@ -257,7 +257,7 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
   late int _selectedYear;
   late int _calendarMonth;
   late DateTime _selectedWeek;
-  String _calendarType = 'mensal'; // 'semanal', 'mensal', 'anual'
+  String _calendarType = 'semanal'; // 'semanal', 'mensal', 'anual'
   late CityData _selectedCity;
   late Future<List<Holiday>> _holidaysFuture;
   late AnimationController _animationController;
@@ -450,6 +450,11 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
       _calendarMonth = DateTime.now().month;
       final savedDarkMode = prefs.getBool('isDarkMode');
       if (savedDarkMode != null) _isDarkMode = savedDarkMode;
+      final savedCalendarType = prefs.getString('calendarType');
+      if (savedCalendarType != null &&
+          (savedCalendarType == 'semanal' || savedCalendarType == 'mensal' || savedCalendarType == 'anual')) {
+        _calendarType = savedCalendarType;
+      }
     } catch (e) {
       debugPrint('Erro: $e');
     }
@@ -467,6 +472,7 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
       await prefs.setString('selectedCity', _selectedCity.name);
       // Não salvar year pois sempre iniciamos com data atual
       await prefs.setBool('isDarkMode', _isDarkMode);
+      await prefs.setString('calendarType', _calendarType);
     } catch (e) {
       debugPrint('Erro: $e');
     }
@@ -1835,8 +1841,10 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           // ESQUERDA: SETAS DE MÊS/ANO
-                          Row(
-                            children: [
+                          Expanded(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
                               // SETA ESQUERDA - MÊS ANTERIOR
                               SizedBox(
                                 width: 24,
@@ -1867,11 +1875,13 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
                                   ),
                                 ),
                               ),
+                              const SizedBox(width: 8),
                               // MÊS
                               Text(
                                 monthName,
                                 style: TextStyle(fontSize: fontSize * 1.4, fontWeight: FontWeight.bold, color: Colors.blue),
                               ),
+                              const SizedBox(width: 8),
                               // SETA DIREITA - MÊS PRÓXIMO
                               SizedBox(
                                 width: 24,
@@ -1902,11 +1912,11 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 24),
+                              const SizedBox(width: 16),
                               // SETA ESQUERDA - ANO ANTERIOR
                               SizedBox(
-                                width: 40,
-                                height: 40,
+                                width: 32,
+                                height: 32,
                                 child: Material(
                                   color: Colors.transparent,
                                   child: InkWell(
@@ -1916,19 +1926,21 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
                                         _holidaysFuture = _getHolidaysForDisplay(_selectedYear);
                                       });
                                     },
-                                    child: Icon(Icons.chevron_left, size: 24, color: Theme.of(context).colorScheme.primary),
+                                    child: Icon(Icons.chevron_left, size: 20, color: Theme.of(context).colorScheme.primary),
                                   ),
                                 ),
                               ),
+                              const SizedBox(width: 8),
                               // ANO
                               Text(
                                 '$_selectedYear',
                                 style: TextStyle(fontSize: fontSize * 1.4, fontWeight: FontWeight.bold, color: Colors.blue),
                               ),
+                              const SizedBox(width: 8),
                               // SETA DIREITA - ANO PRÓXIMO
                               SizedBox(
-                                width: 40,
-                                height: 40,
+                                width: 32,
+                                height: 32,
                                 child: Material(
                                   color: Colors.transparent,
                                   child: InkWell(
@@ -1938,12 +1950,13 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
                                         _holidaysFuture = _getHolidaysForDisplay(_selectedYear);
                                       });
                                     },
-                                    child: Icon(Icons.chevron_right, size: 24, color: Theme.of(context).colorScheme.primary),
+                                    child: Icon(Icons.chevron_right, size: 20, color: Theme.of(context).colorScheme.primary),
                                   ),
                                 ),
                               ),
                             ],
                           ),
+                        ),
                           // DIREITA: TIPO DE CALENDÁRIO
                           SizedBox(
                             width: 120,
@@ -1963,8 +1976,8 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
                                 items: const [
-                                  DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
                                   DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
+                                  DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
                                   DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
                                 ],
                                 onChanged: (type) {
@@ -1972,6 +1985,7 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
                                     setState(() {
                                       _calendarType = type;
                                     });
+                                    _savePreferences();
                                   }
                                 },
                               ),
@@ -2200,8 +2214,8 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
                             items: const [
-                              DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
                               DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
+                              DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
                               DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
                             ],
                             onChanged: (type) {
@@ -2209,6 +2223,7 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
                                 setState(() {
                                   _calendarType = type;
                                 });
+                                _savePreferences();
                               }
                             },
                           ),
@@ -2432,8 +2447,8 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
                             items: const [
-                              DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
                               DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
+                              DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
                               DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
                             ],
                             onChanged: (type) {
@@ -2441,6 +2456,7 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
                                 setState(() {
                                   _calendarType = type;
                                 });
+                                _savePreferences();
                               }
                             },
                           ),
