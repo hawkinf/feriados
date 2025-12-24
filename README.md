@@ -1,4 +1,4 @@
-# Feriados Brasil v2.2.0
+# CalendarPRO v1.50
 
 ## 🎯 Aplicativo Completo de Feriados
 
