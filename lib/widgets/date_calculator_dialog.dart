@@ -190,7 +190,6 @@ class _DateCalculatorDialogState extends State<DateCalculatorDialog> {
                       _buildPdfTableRow('Cidade:', data['cidade']!, true),
                       _buildPdfTableRow('Data Referência:', data['dataReferencia']!, false),
                       _buildPdfTableRow('Dias:', data['dias']!, true),
-                      _buildPdfTableRow('Data Calculada:', data['dataCalculada']!, false),
                     ],
                   ),
                 ),
@@ -463,15 +462,21 @@ class _DateCalculatorDialogState extends State<DateCalculatorDialog> {
 
                 Color bgColor = Colors.white;
                 Color textColor = Colors.black;
+                double borderWidth = 1;
+                BoxShape shape = BoxShape.rectangle;
+                BorderRadius? borderRadius = BorderRadius.circular(4);
 
                 if (isReferenceSelected) {
                   // Data de referência selecionada: azul com letras brancas
                   bgColor = Colors.blue;
                   textColor = Colors.white;
                 } else if (isCalculated) {
-                  // Data calculada: roxo com letras brancas
-                  bgColor = Colors.purple;
-                  textColor = Colors.white;
+                  // Data calculada destacada com círculo amarelo e borda preta grossa
+                  bgColor = const Color(0xFFFFEB3B);
+                  textColor = Colors.black;
+                  borderWidth = 3;
+                  shape = BoxShape.circle;
+                  borderRadius = null;
                 } else if (isHoliday) {
                   // Feriados sempre verde com letras brancas
                   bgColor = Colors.green;
@@ -496,9 +501,10 @@ class _DateCalculatorDialogState extends State<DateCalculatorDialog> {
                       color: bgColor,
                       border: Border.all(
                         color: Colors.black,
-                        width: 1,
+                        width: borderWidth,
                       ),
-                      borderRadius: BorderRadius.circular(4),
+                      shape: shape,
+                      borderRadius: borderRadius,
                     ),
                     child: Center(
                       child: Text(
@@ -514,6 +520,40 @@ class _DateCalculatorDialogState extends State<DateCalculatorDialog> {
                 );
               },
             ),
+            if (!isReference) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.yellow[100],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.black54, width: 1.5),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      DateFormat('dd/MM/yyyy', 'pt_BR').format(date),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _getDayOfWeekName(date),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -536,7 +576,7 @@ class _DateCalculatorDialogState extends State<DateCalculatorDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Título com dropdown de cidade e botão de PDF
+            // Cabeçalho com cidade fixa (definida nas preferências) e botão de PDF
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -553,53 +593,12 @@ class _DateCalculatorDialogState extends State<DateCalculatorDialog> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      DropdownButton<String>(
-                        value: _selectedCityName,
-                        isExpanded: true,
-                        items: const [
-                          DropdownMenuItem(value: 'Caçapava', child: Text('Caçapava')),
-                          DropdownMenuItem(value: 'Igaratá', child: Text('Igaratá')),
-                          DropdownMenuItem(value: 'Jacareí', child: Text('Jacareí')),
-                          DropdownMenuItem(value: 'Jambeiro', child: Text('Jambeiro')),
-                          DropdownMenuItem(value: 'Monteiro Lobato', child: Text('Monteiro Lobato')),
-                          DropdownMenuItem(value: 'Paraibuna', child: Text('Paraibuna')),
-                          DropdownMenuItem(value: 'Santa Branca', child: Text('Santa Branca')),
-                          DropdownMenuItem(value: 'São José dos Campos', child: Text('São José dos Campos')),
-                          DropdownMenuItem(value: 'Campos do Jordão', child: Text('Campos do Jordão')),
-                          DropdownMenuItem(value: 'Lagoinha', child: Text('Lagoinha')),
-                          DropdownMenuItem(value: 'Natividade da Serra', child: Text('Natividade da Serra')),
-                          DropdownMenuItem(value: 'Pindamonhangaba', child: Text('Pindamonhangaba')),
-                          DropdownMenuItem(value: 'Redenção da Serra', child: Text('Redenção da Serra')),
-                          DropdownMenuItem(value: 'Santo Antônio do Pinhal', child: Text('Santo Antônio do Pinhal')),
-                          DropdownMenuItem(value: 'São Bento do Sapucaí', child: Text('São Bento do Sapucaí')),
-                          DropdownMenuItem(value: 'São Luiz do Paraitinga', child: Text('São Luiz do Paraitinga')),
-                          DropdownMenuItem(value: 'Taubaté', child: Text('Taubaté')),
-                          DropdownMenuItem(value: 'Tremembé', child: Text('Tremembé')),
-                          DropdownMenuItem(value: 'Aparecida', child: Text('Aparecida')),
-                          DropdownMenuItem(value: 'Cachoeira Paulista', child: Text('Cachoeira Paulista')),
-                          DropdownMenuItem(value: 'Canas', child: Text('Canas')),
-                          DropdownMenuItem(value: 'Cunha', child: Text('Cunha')),
-                          DropdownMenuItem(value: 'Guaratinguetá', child: Text('Guaratinguetá')),
-                          DropdownMenuItem(value: 'Lorena', child: Text('Lorena')),
-                          DropdownMenuItem(value: 'Piquete', child: Text('Piquete')),
-                          DropdownMenuItem(value: 'Potim', child: Text('Potim')),
-                          DropdownMenuItem(value: 'Roseira', child: Text('Roseira')),
-                          DropdownMenuItem(value: 'Arapeí', child: Text('Arapeí')),
-                          DropdownMenuItem(value: 'Areias', child: Text('Areias')),
-                          DropdownMenuItem(value: 'Bananal', child: Text('Bananal')),
-                          DropdownMenuItem(value: 'Cruzeiro', child: Text('Cruzeiro')),
-                          DropdownMenuItem(value: 'Lavrinhas', child: Text('Lavrinhas')),
-                          DropdownMenuItem(value: 'Queluz', child: Text('Queluz')),
-                          DropdownMenuItem(value: 'São José do Barreiro', child: Text('São José do Barreiro')),
-                          DropdownMenuItem(value: 'Silveiras', child: Text('Silveiras')),
-                        ],
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() {
-                              _selectedCityName = value;
-                            });
-                          }
-                        },
+                      Text(
+                        _selectedCityName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
@@ -653,7 +652,6 @@ class _DateCalculatorDialogState extends State<DateCalculatorDialog> {
                 ],
               ),
 
-            const SizedBox(height: 24),
 
             // Seção de cálculo
             Card(
@@ -762,40 +760,6 @@ class _DateCalculatorDialogState extends State<DateCalculatorDialog> {
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Data calculada resultado
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.blue[50],
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.blue),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Data Calculada:',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            DateFormat('dd/MM/yyyy - EEEE', 'pt_BR')
-                                .format(_calculatedDate),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue,
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                   ],
                 ),

@@ -21,6 +21,7 @@ dependencies:
 
   # GRÁFICOS
   fl_chart: ^0.66.0
+  window_manager: ^0.3.8
 
 dev_dependencies:
   flutter_test:
