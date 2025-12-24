@@ -2679,66 +2679,92 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
               child: Column(
                 children: [
                   // CABEÇALHO COM CONTROLES DO ANO E TIPO DE CALENDÁRIO
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Center(
-                          child: Text(
-                            '$_selectedYear',
-                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue),
-                          ),
-                        ),
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildTodayButton(),
-                          const SizedBox(width: 8),
-                          SizedBox(
-                            width: 130,
-                            height: 32,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: Theme.of(context).colorScheme.outline,
-                                  width: 2,
-                                ),
-                                borderRadius: BorderRadius.circular(8),
+                  SizedBox(
+                    height: 60,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Align(
+                          alignment: Alignment.center,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(14),
+                              gradient: const LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [Color(0xFF0D47A1), Color(0xFF2196F3)],
                               ),
-                              child: DropdownButton<String>(
-                                value: _calendarType,
-                                isExpanded: true,
-                                underline: const SizedBox(),
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
-                                items: const [
-                                  DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
-                                  DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
-                                  DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
-                                ],
-                                onChanged: (type) {
-                                  if (type != null) {
-                                    setState(() {
-                                      _calendarType = type;
-                                    });
-                                    _savePreferences();
-                                  }
-                                },
+                              boxShadow: const [
+                                BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
+                              ],
+                              border: Border.all(color: Colors.white70, width: 2),
+                            ),
+                            child: Text(
+                              '$_selectedYear',
+                              style: const TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.2,
+                                color: Colors.white,
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildTodayButton(),
+                              const SizedBox(width: 8),
+                              SizedBox(
+                                width: 130,
+                                height: 32,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: Theme.of(context).colorScheme.outline,
+                                      width: 2,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: DropdownButton<String>(
+                                    value: _calendarType,
+                                    isExpanded: true,
+                                    underline: const SizedBox(),
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+                                    items: const [
+                                      DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
+                                      DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
+                                      DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
+                                    ],
+                                    onChanged: (type) {
+                                      if (type != null) {
+                                        setState(() {
+                                          _calendarType = type;
+                                        });
+                                        _savePreferences();
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 12),
                   // GRID DOS MESES
                   Builder(
                     builder: (context) {
                       final now = DateTime.now();
-                      const double monthCardHeight = 230;
+                      const double monthCardHeight = 236;
                       const double verticalSpacingTop = 2;
-                      const double verticalSpacingBetweenRows = 6;
+                      const double verticalSpacingBetweenRows = 4;
                       const double verticalSpacingBottom = 4;
                       const double arrowDiameter = 36;
                       const double gridHorizontalPadding = 32;
