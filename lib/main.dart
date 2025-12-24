@@ -258,6 +258,7 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
   bool _isLoading = false;
   bool _isDarkMode = false;
   final Map<int, Future<List<Holiday>>> _holidaysCache = {};
+  double _horizontalDragDistance = 0;
 
   // Cache para "Próximo Feriado"
   ({String name, int daysUntil})? _cachedNextHoliday;
@@ -331,6 +332,76 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
     } catch (e) {
       debugPrint('Erro ao salvar tamanho da janela: $e');
     }
+  }
+
+  void _changeYear(int delta) {
+    if (delta == 0) return;
+    setState(() {
+      _selectedYear += delta;
+      _holidaysFuture = _getHolidaysForDisplay(_selectedYear);
+    });
+  }
+
+  void _changeMonth(int delta) {
+    if (delta == 0) return;
+    setState(() {
+      int newMonth = _calendarMonth + delta;
+      int newYear = _selectedYear;
+
+      while (newMonth < 1) {
+        newMonth += 12;
+        newYear--;
+      }
+      while (newMonth > 12) {
+        newMonth -= 12;
+        newYear++;
+      }
+
+      final yearChanged = newYear != _selectedYear;
+      _calendarMonth = newMonth;
+      _selectedYear = newYear;
+      if (yearChanged) {
+        _holidaysFuture = _getHolidaysForDisplay(_selectedYear);
+      }
+    });
+  }
+
+  void _changeWeek(int deltaWeeks) {
+    if (deltaWeeks == 0) return;
+    setState(() {
+      _selectedWeek = _selectedWeek.add(Duration(days: 7 * deltaWeeks));
+      if (_selectedWeek.year != _selectedYear) {
+        _selectedYear = _selectedWeek.year;
+        _holidaysFuture = _getHolidaysForDisplay(_selectedYear);
+      }
+    });
+  }
+
+  void _handleHorizontalSwipe(
+    DragEndDetails details, {
+    required VoidCallback onSwipeLeft,
+    required VoidCallback onSwipeRight,
+  }) {
+    const distanceThreshold = 65;
+    const velocityThreshold = 240;
+    final dragDistance = _horizontalDragDistance;
+    final velocity = details.velocity.pixelsPerSecond.dx;
+
+    if (dragDistance.abs() >= distanceThreshold) {
+      if (dragDistance < 0) {
+        onSwipeLeft();
+      } else {
+        onSwipeRight();
+      }
+    } else if (velocity.abs() >= velocityThreshold) {
+      if (velocity < 0) {
+        onSwipeLeft();
+      } else {
+        onSwipeRight();
+      }
+    }
+
+    _horizontalDragDistance = 0;
   }
 
   Widget _buildAnnualMonthCard({
@@ -2025,320 +2096,297 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
           debugPrint('Carregando feriados...');
         }
         
-        return Center(
-          child: Column(
-            children: [
-              // TÍTULO DO MÊS/ANO COM SETAS
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Align(
-                    alignment: Alignment.center,
-                    child: Text(
-                      '$monthName $_selectedYear',
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.blue,
-                        letterSpacing: 1.2,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildTodayButton(),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          width: 120,
-                          height: 32,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Theme.of(context).colorScheme.outline,
-                                width: 2,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: DropdownButton<String>(
-                              value: _calendarType,
-                              isExpanded: true,
-                              underline: const SizedBox(),
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
-                              items: const [
-                                DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
-                                DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
-                                DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
-                              ],
-                              onChanged: (type) {
-                                if (type != null) {
-                                  setState(() {
-                                    _calendarType = type;
-                                  });
-                                  _savePreferences();
-                                }
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const SizedBox(height: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                child: Stack(
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onHorizontalDragStart: (_) => _horizontalDragDistance = 0,
+          onHorizontalDragUpdate: (details) {
+            _horizontalDragDistance += details.delta.dx;
+          },
+          onHorizontalDragCancel: () => _horizontalDragDistance = 0,
+          onHorizontalDragEnd: (details) {
+            _handleHorizontalSwipe(
+              details,
+              onSwipeLeft: () => _changeMonth(1),
+              onSwipeRight: () => _changeMonth(-1),
+            );
+          },
+          child: Center(
+            child: Column(
+              children: [
+                Stack(
                   alignment: Alignment.center,
-                  clipBehavior: Clip.none,
                   children: [
-                    Padding(
-                      // Reserva espaço lateral para alinhar o centro das setas à borda externa das células.
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
-                      child: Column(
+                    Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        '$monthName $_selectedYear',
+                        style: const TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.blue,
+                          letterSpacing: 1.2,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: dayHeaders.map((day) => Expanded(
-                              child: Center(
-                                child: Text(
-                                  day,
-                                  style: TextStyle(
-                                    fontSize: headerFontSize * 0.8,
-                                    fontWeight: FontWeight.bold,
-                                    color: day == 'DOM' || day == 'SAB'
-                                        ? Colors.white
-                                        : Theme.of(context).colorScheme.onSurface,
-                                    backgroundColor: day == 'DOM'
-                                        ? Colors.red
-                                        : (day == 'SAB'
-                                            ? const Color(0xFFEF9A9A)
-                                            : Colors.transparent),
-                                  ),
+                          _buildTodayButton(),
+                          const SizedBox(width: 8),
+                          SizedBox(
+                            width: 120,
+                            height: 32,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.outline,
+                                  width: 2,
                                 ),
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                            )).toList(),
-                          ),
-                          const SizedBox(height: 4),
-                          GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 7,
-                              childAspectRatio: 0.95,
-                              mainAxisSpacing: 0.01,
-                              crossAxisSpacing: 0.01,
+                              child: DropdownButton<String>(
+                                value: _calendarType,
+                                isExpanded: true,
+                                underline: const SizedBox(),
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+                                items: const [
+                                  DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
+                                  DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
+                                  DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
+                                ],
+                                onChanged: (type) {
+                                  if (type != null) {
+                                    setState(() {
+                                      _calendarType = type;
+                                    });
+                                    _savePreferences();
+                                  }
+                                },
+                              ),
                             ),
-                            itemCount: calendarDays.length,
-                            itemBuilder: (context, index) {
-                              final dayData = calendarDays[index];
-                              final day = dayData.day;
-                              final month = dayData.month;
-                              final year = dayData.year;
-                              final isCurrentMonth = dayData.isCurrentMonth;
-                              final dateObj = DateTime(year, month, day);
-                              final weekday = dateObj.weekday; // 1=segunda, 7=domingo
-                              final dayOfWeek = weekday % 7; // 0=domingo, 1=segunda, ..., 6=sábado
-                              final isToday = isCurrentMonth && day == todayDay;
-                              final holidayKey = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
-                              final isHoliday = holidayDays.contains(holidayKey);
-                              final holidayName = isHoliday ? holidayNames[holidayKey] : null;
-                              
-                              Color bgColor = Colors.white;
-                              Color textColor = Theme.of(context).colorScheme.onSurface;
-                              double opacity = 1.0;
-                              Color? todayHighlightColor;
-
-                              if (isToday) {
-                                todayHighlightColor = Colors.yellow[600] ?? Colors.yellow;
-                                textColor = Colors.black;
-                              } else if (isHoliday) {
-                                bgColor = isCurrentMonth ? Colors.green : (Colors.lightGreen[300] ?? Colors.lightGreen);
-                                textColor = isCurrentMonth ? Colors.white : (Colors.grey[700] ?? Colors.grey);
-                                opacity = 1.0;
-                              } else if (dayOfWeek == 0) { // Domingo
-                                bgColor = Colors.red;
-                                textColor = Colors.white;
-                              } else if (dayOfWeek == 6) { // Sábado
-                                bgColor = Color(0xFFEF9A9A);
-                                textColor = Colors.white;
-                              } else if (!isCurrentMonth) {
-                                bgColor = Colors.grey[600] ?? Colors.grey;
-                                opacity = 0.6;
-                                textColor = Colors.white;
-                              }
-                              
-                              return Tooltip(
-                                message: holidayName ?? '',
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: bgColor.withValues(alpha: opacity),
-                                    border: Border.all(
-                                      color: Colors.black,
-                                      width: 2.0,
-                                    ),
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                  padding: EdgeInsets.all(1.0),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Stack(
-                                        alignment: Alignment.center,
-                                        children: [
-                                          if (todayHighlightColor != null)
-                                            Container(
-                                              width: 66,
-                                              height: 66,
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color: todayHighlightColor,
-                                                border: Border.all(color: Colors.black, width: 3),
-                                              ),
-                                            ),
-                                          Text(
-                                            day.toString(),
-                                            style: TextStyle(fontSize: fontSize * 1.7, fontWeight: FontWeight.w900, color: textColor),
-                                          ),
-                                        ],
-                                      ),
-                                      if (isToday)
-                                        Padding(
-                                          padding: const EdgeInsets.only(top: 4),
-                                          child: Text(
-                                            'HOJE',
-                                            style: TextStyle(fontSize: fontSize * 0.9, fontWeight: FontWeight.w700, color: Colors.black),
-                                          ),
-                                        ),
-                                      if (isHoliday && holidayName != null)
-                                        Flexible(
-                                          child: Padding(
-                                            padding: const EdgeInsets.only(top: 0.0),
-                                            child: Text(
-                                              holidayName,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(fontSize: fontSize * 0.85, fontWeight: FontWeight.w600, color: textColor),
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
                           ),
                         ],
                       ),
                     ),
-                    Positioned(
-                      left: 12,
-                      top: 0,
-                      bottom: 0,
-                      child: Center(
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints.tightFor(width: 56, height: 56),
-                          iconSize: 30,
-                          splashRadius: 30,
-                          icon: Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Theme.of(context).colorScheme.primary,
-                              border: Border.all(color: Colors.black, width: 2),
-                            ),
-                            alignment: Alignment.center,
-                            child: Icon(
-                              Icons.arrow_back_ios_new,
-                              size: 24,
-                              color: Colors.white,
-                              weight: 700,
-                            ),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              int newMonth = _calendarMonth - 1;
-                              int newYear = _selectedYear;
-
-                              if (newMonth < 1) {
-                                newMonth = 12;
-                                newYear--;
-                              }
-
-                              final currentYear = _selectedYear;
-                              _calendarMonth = newMonth;
-                              _selectedYear = newYear;
-
-                              if (_selectedYear != currentYear) {
-                                _holidaysFuture = _getHolidaysForDisplay(_selectedYear);
-                              }
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      right: 12,
-                      top: 0,
-                      bottom: 0,
-                      child: Center(
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints.tightFor(width: 56, height: 56),
-                          iconSize: 30,
-                          splashRadius: 30,
-                          icon: Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Theme.of(context).colorScheme.primary,
-                              border: Border.all(color: Colors.black, width: 2),
-                            ),
-                            alignment: Alignment.center,
-                            child: Icon(
-                              Icons.arrow_forward_ios,
-                              size: 24,
-                              color: Colors.white,
-                              weight: 700,
-                            ),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              int newMonth = _calendarMonth + 1;
-                              int newYear = _selectedYear;
-
-                              if (newMonth > 12) {
-                                newMonth = 1;
-                                newYear++;
-                              }
-
-                              final currentYear = _selectedYear;
-                              _calendarMonth = newMonth;
-                              _selectedYear = newYear;
-
-                              if (_selectedYear != currentYear) {
-                                _holidaysFuture = _getHolidaysForDisplay(_selectedYear);
-                              }
-                            });
-                          },
-                        ),
-                      ),
-                    ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                const SizedBox(height: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    clipBehavior: Clip.none,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 40),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: dayHeaders.map((day) => Expanded(
+                                child: Center(
+                                  child: Text(
+                                    day,
+                                    style: TextStyle(
+                                      fontSize: headerFontSize * 0.8,
+                                      fontWeight: FontWeight.bold,
+                                      color: day == 'DOM' || day == 'SAB'
+                                          ? Colors.white
+                                          : Theme.of(context).colorScheme.onSurface,
+                                      backgroundColor: day == 'DOM'
+                                          ? Colors.red
+                                          : (day == 'SAB'
+                                              ? const Color(0xFFEF9A9A)
+                                              : Colors.transparent),
+                                    ),
+                                  ),
+                                ),
+                              )).toList(),
+                            ),
+                            const SizedBox(height: 4),
+                            GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 7,
+                                childAspectRatio: 0.95,
+                                mainAxisSpacing: 0.01,
+                                crossAxisSpacing: 0.01,
+                              ),
+                              itemCount: calendarDays.length,
+                              itemBuilder: (context, index) {
+                                final dayData = calendarDays[index];
+                                final day = dayData.day;
+                                final month = dayData.month;
+                                final year = dayData.year;
+                                final isCurrentMonth = dayData.isCurrentMonth;
+                                final dateObj = DateTime(year, month, day);
+                                final weekday = dateObj.weekday; // 1=segunda, 7=domingo
+                                final dayOfWeek = weekday % 7; // 0=domingo, 1=segunda, ..., 6=sábado
+                                final isToday = isCurrentMonth && day == todayDay;
+                                final holidayKey = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+                                final isHoliday = holidayDays.contains(holidayKey);
+                                final holidayName = isHoliday ? holidayNames[holidayKey] : null;
+                                
+                                Color bgColor = Colors.white;
+                                Color textColor = Theme.of(context).colorScheme.onSurface;
+                                double opacity = 1.0;
+                                Color? todayHighlightColor;
+
+                                if (isToday) {
+                                  todayHighlightColor = Colors.yellow[600] ?? Colors.yellow;
+                                  textColor = Colors.black;
+                                } else if (isHoliday) {
+                                  bgColor = isCurrentMonth ? Colors.green : (Colors.lightGreen[300] ?? Colors.lightGreen);
+                                  textColor = isCurrentMonth ? Colors.white : (Colors.grey[700] ?? Colors.grey);
+                                  opacity = 1.0;
+                                } else if (dayOfWeek == 0) { // Domingo
+                                  bgColor = Colors.red;
+                                  textColor = Colors.white;
+                                } else if (dayOfWeek == 6) { // Sábado
+                                  bgColor = Color(0xFFEF9A9A);
+                                  textColor = Colors.white;
+                                } else if (!isCurrentMonth) {
+                                  bgColor = Colors.grey[600] ?? Colors.grey;
+                                  opacity = 0.6;
+                                  textColor = Colors.white;
+                                }
+                                
+                                return Tooltip(
+                                  message: holidayName ?? '',
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: bgColor.withValues(alpha: opacity),
+                                      border: Border.all(
+                                        color: Colors.black,
+                                        width: 2.0,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
+                                    padding: EdgeInsets.all(1.0),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            if (todayHighlightColor != null)
+                                              Container(
+                                                width: 66,
+                                                height: 66,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: todayHighlightColor,
+                                                  border: Border.all(color: Colors.black, width: 3),
+                                                ),
+                                              ),
+                                            Text(
+                                              day.toString(),
+                                              style: TextStyle(fontSize: fontSize * 1.7, fontWeight: FontWeight.w900, color: textColor),
+                                            ),
+                                          ],
+                                        ),
+                                        if (isToday)
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 4),
+                                            child: Text(
+                                              'HOJE',
+                                              style: TextStyle(fontSize: fontSize * 0.9, fontWeight: FontWeight.w700, color: Colors.black),
+                                            ),
+                                          ),
+                                        if (isHoliday && holidayName != null)
+                                          Flexible(
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(top: 0.0),
+                                              child: Text(
+                                                holidayName,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(fontSize: fontSize * 0.85, fontWeight: FontWeight.w600, color: textColor),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        left: 12,
+                        top: 0,
+                        bottom: 0,
+                        child: Center(
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints.tightFor(width: 56, height: 56),
+                            iconSize: 30,
+                            splashRadius: 30,
+                            icon: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Theme.of(context).colorScheme.primary,
+                                border: Border.all(color: Colors.black, width: 2),
+                              ),
+                              alignment: Alignment.center,
+                              child: Icon(
+                                Icons.arrow_back_ios_new,
+                                size: 24,
+                                color: Colors.white,
+                                weight: 700,
+                              ),
+                            ),
+                            onPressed: () => _changeMonth(-1),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: 12,
+                        top: 0,
+                        bottom: 0,
+                        child: Center(
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints.tightFor(width: 56, height: 56),
+                            iconSize: 30,
+                            splashRadius: 30,
+                            icon: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Theme.of(context).colorScheme.primary,
+                                border: Border.all(color: Colors.black, width: 2),
+                              ),
+                              alignment: Alignment.center,
+                              child: Icon(
+                                Icons.arrow_forward_ios,
+                                size: 24,
+                                color: Colors.white,
+                                weight: 700,
+                              ),
+                            ),
+                            onPressed: () => _changeMonth(1),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -2409,196 +2457,188 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
           debugPrint('Feriados da semana ${startOfWeek.toIso8601String()}: ${holidayDays.length}');
         }
         
-        return Transform.scale(
-          scale: 0.92,
-          alignment: Alignment.topCenter,
-          child: Card(
-            elevation: 1,
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  // CABEÇALHO COM TIPO DE CALENDÁRIO (PADRÃO)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      RichText(
-                        text: TextSpan(
-                          style: DefaultTextStyle.of(context).style,
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onHorizontalDragStart: (_) => _horizontalDragDistance = 0,
+          onHorizontalDragUpdate: (details) {
+            _horizontalDragDistance += details.delta.dx;
+          },
+          onHorizontalDragCancel: () => _horizontalDragDistance = 0,
+          onHorizontalDragEnd: (details) {
+            _handleHorizontalSwipe(
+              details,
+              onSwipeLeft: () => _changeWeek(1),
+              onSwipeRight: () => _changeWeek(-1),
+            );
+          },
+          child: Transform.scale(
+            scale: 0.92,
+            alignment: Alignment.topCenter,
+            child: Card(
+              elevation: 1,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        RichText(
+                          text: TextSpan(
+                            style: DefaultTextStyle.of(context).style,
+                            children: [
+                              TextSpan(
+                                text: 'Semana #$weekNumber\n',
+                                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.blue),
+                              ),
+                              TextSpan(
+                                text: '${monthNamesComplete[startOfWeek.month - 1]} ${startOfWeek.year}',
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black87),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            TextSpan(
-                              text: 'Semana #$weekNumber\n',
-                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.blue),
-                            ),
-                            TextSpan(
-                              text: '${monthNamesComplete[startOfWeek.month - 1]} ${startOfWeek.year}',
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black87),
+                            _buildTodayButton(),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: 120,
+                              height: 32,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Theme.of(context).colorScheme.outline,
+                                    width: 2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: DropdownButton<String>(
+                                  value: _calendarType,
+                                  isExpanded: true,
+                                  underline: const SizedBox(),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+                                  items: const [
+                                    DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
+                                    DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
+                                    DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
+                                  ],
+                                  onChanged: (type) {
+                                    if (type != null) {
+                                      setState(() {
+                                        _calendarType = type;
+                                      });
+                                      _savePreferences();
+                                    }
+                                  },
+                                ),
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildTodayButton(),
-                          const SizedBox(width: 8),
-                          SizedBox(
-                            width: 120,
-                            height: 32,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: Theme.of(context).colorScheme.outline,
-                                  width: 2,
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: DropdownButton<String>(
-                                value: _calendarType,
-                                isExpanded: true,
-                                underline: const SizedBox(),
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
-                                items: const [
-                                  DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
-                                  DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
-                                  DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
-                                ],
-                                onChanged: (type) {
-                                  if (type != null) {
-                                    setState(() {
-                                      _calendarType = type;
-                                    });
-                                    _savePreferences();
-                                  }
-                                },
-                              ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 50,
+                          child: Center(
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              iconSize: 40,
+                              icon: Icon(Icons.arrow_circle_left_rounded),
+                              color: Theme.of(context).colorScheme.primary,
+                              onPressed: () => _changeWeek(-1),
                             ),
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 12),
-                  // CONTEÚDO DA SEMANA
-                  Row(
-                    children: [
-                      // SETA ESQUERDA
-                      SizedBox(
-                        width: 50,
-                        child: Center(
-                          child: IconButton(
-                            padding: EdgeInsets.zero,
-                            iconSize: 40,
-                            icon: Icon(Icons.arrow_circle_left_rounded),
-                            color: Theme.of(context).colorScheme.primary,
-                            onPressed: () {
-                              setState(() {
-                                _selectedWeek = _selectedWeek.subtract(Duration(days: 7));
-                                // Atualizar _selectedYear se mudar de ano
-                                if (_selectedWeek.year != _selectedYear) {
-                                  _selectedYear = _selectedWeek.year;
-                                  _holidaysFuture = _getHolidaysForDisplay(_selectedYear);
-                                }
-                              });
-                            },
-                          ),
                         ),
-                      ),
-                      // SEMANA
-                      Expanded(
-                        child: Column(
-                          children: weekDays.map((day) {
-                            final now = DateTime.now();
-                            final isToday = day.date.year == now.year && day.date.month == now.month && day.date.day == now.day;
-                            final holidayKey = '${day.date.year}-${day.date.month.toString().padLeft(2, '0')}-${day.date.day.toString().padLeft(2, '0')}';
-                            final isHoliday = holidayDays.contains(holidayKey);
-                            final holidayName = isHoliday ? holidayNames[holidayKey] : null;
-                            
-                            Color bgColor = Colors.white;
-                            Color textColor = Theme.of(context).colorScheme.onSurface;
-                            
-                            if (isToday) {
-                              bgColor = Colors.blue;
-                              textColor = Colors.white;
-                            } else if (isHoliday) {
-                              bgColor = Colors.green;
-                              textColor = Colors.white;
-                            } else if (day.label == 'DOM') { // Domingo
-                              bgColor = Colors.red;
-                              textColor = Colors.white;
-                            } else if (day.label == 'SAB') { // Sábado
-                              bgColor = Color(0xFFEF9A9A); // Vermelho mais claro
-                              textColor = Colors.white;
-                            }
-                            
-                            return Container(
-                              margin: EdgeInsets.only(bottom: 8),
-                              padding: EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: bgColor,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.black, width: 1.5),
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    day.label,
-                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textColor),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          '${day.date.day}',
-                                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
-                                        ),
-                                        if (isToday)
-                                          Text('HOJE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: textColor)),
-                                        if (isHoliday && holidayName != null)
-                                          Text(
-                                            holidayName,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: textColor),
-                                          ),
-                                      ],
+                        Expanded(
+                          child: Column(
+                            children: weekDays.map((day) {
+                              final now = DateTime.now();
+                              final isToday = day.date.year == now.year && day.date.month == now.month && day.date.day == now.day;
+                              final holidayKey = '${day.date.year}-${day.date.month.toString().padLeft(2, '0')}-${day.date.day.toString().padLeft(2, '0')}';
+                              final isHoliday = holidayDays.contains(holidayKey);
+                              final holidayName = isHoliday ? holidayNames[holidayKey] : null;
+
+                              Color bgColor = Colors.white;
+                              Color textColor = Theme.of(context).colorScheme.onSurface;
+
+                              if (isToday) {
+                                bgColor = Colors.blue;
+                                textColor = Colors.white;
+                              } else if (isHoliday) {
+                                bgColor = Colors.green;
+                                textColor = Colors.white;
+                              } else if (day.label == 'DOM') {
+                                bgColor = Colors.red;
+                                textColor = Colors.white;
+                              } else if (day.label == 'SAB') {
+                                bgColor = Color(0xFFEF9A9A);
+                                textColor = Colors.white;
+                              }
+
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: bgColor,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.black, width: 1.5),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      day.label,
+                                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textColor),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                      // SETA DIREITA
-                      SizedBox(
-                        width: 50,
-                        child: Center(
-                          child: IconButton(
-                            padding: EdgeInsets.zero,
-                            iconSize: 40,
-                            icon: Icon(Icons.arrow_circle_right_rounded),
-                            color: Theme.of(context).colorScheme.primary,
-                            onPressed: () {
-                              setState(() {
-                                _selectedWeek = _selectedWeek.add(Duration(days: 7));
-                                // Atualizar _selectedYear se mudar de ano
-                                if (_selectedWeek.year != _selectedYear) {
-                                  _selectedYear = _selectedWeek.year;
-                                  _holidaysFuture = _getHolidaysForDisplay(_selectedYear);
-                                }
-                              });
-                            },
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '${day.date.day}',
+                                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
+                                          ),
+                                          if (isToday)
+                                            Text('HOJE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: textColor)),
+                                          if (isHoliday && holidayName != null)
+                                            Text(
+                                              holidayName,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: textColor),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        SizedBox(
+                          width: 50,
+                          child: Center(
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              iconSize: 40,
+                              icon: Icon(Icons.arrow_circle_right_rounded),
+                              color: Theme.of(context).colorScheme.primary,
+                              onPressed: () => _changeWeek(1),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -2631,12 +2671,7 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
         Widget buildYearNavButton({required bool isNext}) {
           const double arrowDiameter = 36;
           return GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedYear += isNext ? 1 : -1;
-                _holidaysFuture = _getHolidaysForDisplay(_selectedYear);
-              });
-            },
+            onTap: () => _changeYear(isNext ? 1 : -1),
             child: Container(
               width: arrowDiameter,
               height: arrowDiameter,
@@ -2668,91 +2703,111 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
           );
         }
         
-        return Transform.scale(
-          scale: 0.98,
-          alignment: Alignment.topCenter,
-          child: Card(
-            elevation: 1,
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            child: Padding(
-              padding: EdgeInsets.all(6),
-              child: Column(
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onHorizontalDragStart: (_) => _horizontalDragDistance = 0,
+          onHorizontalDragUpdate: (details) {
+            _horizontalDragDistance += details.delta.dx;
+          },
+          onHorizontalDragCancel: () => _horizontalDragDistance = 0,
+          onHorizontalDragEnd: (details) {
+            _handleHorizontalSwipe(
+              details,
+              onSwipeLeft: () => _changeYear(1),
+              onSwipeRight: () => _changeYear(-1),
+            );
+          },
+          child: Transform.scale(
+            scale: 0.98,
+            alignment: Alignment.topCenter,
+            child: Card(
+              elevation: 1,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              child: Padding(
+                padding: const EdgeInsets.all(6),
+                child: Column(
                 children: [
                   // CABEÇALHO COM CONTROLES DO ANO E TIPO DE CALENDÁRIO
                   SizedBox(
-                    height: 60,
-                    child: Stack(
-                      alignment: Alignment.center,
+                    height: 72,
+                    child: Row(
                       children: [
-                        Align(
-                          alignment: Alignment.center,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(14),
-                              gradient: const LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [Color(0xFF0D47A1), Color(0xFF2196F3)],
-                              ),
-                              boxShadow: const [
-                                BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
-                              ],
-                              border: Border.all(color: Colors.white70, width: 2),
-                            ),
-                            child: Text(
-                              '$_selectedYear',
-                              style: const TextStyle(
-                                fontSize: 30,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.2,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.centerRight,
+                        Expanded(
                           child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              _buildTodayButton(),
-                              const SizedBox(width: 8),
-                              SizedBox(
-                                width: 130,
-                                height: 32,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: Theme.of(context).colorScheme.outline,
-                                      width: 2,
-                                    ),
-                                    borderRadius: BorderRadius.circular(8),
+                              buildYearNavButton(isNext: false),
+                              const SizedBox(width: 14),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  gradient: const LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [Color(0xFF0D47A1), Color(0xFF2196F3)],
                                   ),
-                                  child: DropdownButton<String>(
-                                    value: _calendarType,
-                                    isExpanded: true,
-                                    underline: const SizedBox(),
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
-                                    items: const [
-                                      DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
-                                      DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
-                                      DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
-                                    ],
-                                    onChanged: (type) {
-                                      if (type != null) {
-                                        setState(() {
-                                          _calendarType = type;
-                                        });
-                                        _savePreferences();
-                                      }
-                                    },
+                                  boxShadow: const [
+                                    BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
+                                  ],
+                                  border: Border.all(color: Colors.white70, width: 2),
+                                ),
+                                child: Text(
+                                  '$_selectedYear',
+                                  style: const TextStyle(
+                                    fontSize: 30,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.2,
+                                    color: Colors.white,
                                   ),
                                 ),
                               ),
+                              const SizedBox(width: 14),
+                              buildYearNavButton(isNext: true),
                             ],
                           ),
+                        ),
+                        const SizedBox(width: 12),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildTodayButton(),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: 130,
+                              height: 32,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Theme.of(context).colorScheme.outline,
+                                    width: 2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: DropdownButton<String>(
+                                  value: _calendarType,
+                                  isExpanded: true,
+                                  underline: const SizedBox(),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+                                  items: const [
+                                    DropdownMenuItem<String>(value: 'semanal', child: Text('Semanal')),
+                                    DropdownMenuItem<String>(value: 'mensal', child: Text('Mensal')),
+                                    DropdownMenuItem<String>(value: 'anual', child: Text('Anual')),
+                                  ],
+                                  onChanged: (type) {
+                                    if (type != null) {
+                                      setState(() {
+                                        _calendarType = type;
+                                      });
+                                      _savePreferences();
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -2766,13 +2821,9 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
                       const double verticalSpacingTop = 2;
                       const double verticalSpacingBetweenRows = 4;
                       const double verticalSpacingBottom = 4;
-                      const double arrowDiameter = 36;
                       const double gridHorizontalPadding = 32;
-                      const double arrowOverlap = 6;
 
-                      final double arrowTopOffset = verticalSpacingTop + monthCardHeight + (verticalSpacingBetweenRows / 2) - (arrowDiameter / 2);
                       final double totalHeight = verticalSpacingTop + monthCardHeight + verticalSpacingBetweenRows + monthCardHeight + verticalSpacingBetweenRows + monthCardHeight + verticalSpacingBottom;
-                      final double arrowHorizontalOffset = gridHorizontalPadding - (arrowDiameter / 2) - arrowOverlap;
 
                       Widget buildMonthRow(List<int> monthIndices) {
                         return Row(
@@ -2798,35 +2849,19 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
 
                       return SizedBox(
                         height: totalHeight,
-                        child: Stack(
-                          children: [
-                            Positioned.fill(
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(horizontal: gridHorizontalPadding),
-                                child: Column(
-                                  children: [
-                                    SizedBox(height: verticalSpacingTop),
-                                    buildMonthRow([0, 1, 2, 3]),
-                                    SizedBox(height: verticalSpacingBetweenRows),
-                                    buildMonthRow([4, 5, 6, 7]),
-                                    SizedBox(height: verticalSpacingBetweenRows),
-                                    buildMonthRow([8, 9, 10, 11]),
-                                    SizedBox(height: verticalSpacingBottom),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              left: arrowHorizontalOffset,
-                              top: arrowTopOffset,
-                              child: buildYearNavButton(isNext: false),
-                            ),
-                            Positioned(
-                              right: arrowHorizontalOffset,
-                              top: arrowTopOffset,
-                              child: buildYearNavButton(isNext: true),
-                            ),
-                          ],
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: gridHorizontalPadding),
+                          child: Column(
+                            children: [
+                              SizedBox(height: verticalSpacingTop),
+                              buildMonthRow([0, 1, 2, 3]),
+                              SizedBox(height: verticalSpacingBetweenRows),
+                              buildMonthRow([4, 5, 6, 7]),
+                              SizedBox(height: verticalSpacingBetweenRows),
+                              buildMonthRow([8, 9, 10, 11]),
+                              SizedBox(height: verticalSpacingBottom),
+                            ],
+                          ),
                         ),
                       );
                     },
@@ -2835,7 +2870,8 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
               ),
             ),
           ),
-        );
+        ),
+      );
       },
     );
   }
