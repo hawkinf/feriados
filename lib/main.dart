@@ -2259,9 +2259,20 @@ class _HolidayScreenState extends State<HolidayScreen> with TickerProviderStateM
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Semana: # $weekNumber - ${monthNamesComplete[startOfWeek.month - 1]} ${startOfWeek.year}',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue),
+                      RichText(
+                        text: TextSpan(
+                          style: DefaultTextStyle.of(context).style,
+                          children: [
+                            TextSpan(
+                              text: 'Semana #$weekNumber\n',
+                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.blue),
+                            ),
+                            TextSpan(
+                              text: '${monthNamesComplete[startOfWeek.month - 1]} ${startOfWeek.year}',
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black87),
+                            ),
+                          ],
+                        ),
                       ),
                       Row(
                         mainAxisSize: MainAxisSize.min,
