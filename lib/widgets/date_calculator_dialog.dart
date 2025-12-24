@@ -254,6 +254,7 @@ class _DateCalculatorDialogState extends State<DateCalculatorDialog> {
 
     return Card(
       elevation: 2,
+      color: isReference ? Colors.white : Colors.grey[400],
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: const BorderSide(color: Colors.black, width: 1),
